@@ -1,0 +1,26 @@
+services:
+  mongo:
+    image: mongo:7
+    container_name: financial-tracker-mongo
+    restart: unless-stopped
+    ports:
+      - '27017:27017'
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: root
+    volumes:
+      - mongo-data:/data/db
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: financial-tracker-rabbitmq
+    restart: unless-stopped
+    ports:
+      - '5673:5672'
+      - '15673:15672'
+    environment:
+      RABBITMQ_DEFAULT_USER: root
+      RABBITMQ_DEFAULT_PASS: root
+
+volumes:
+  mongo-data:

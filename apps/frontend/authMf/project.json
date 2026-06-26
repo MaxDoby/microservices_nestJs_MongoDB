@@ -1,0 +1,24 @@
+{
+  "name": "authMf",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "apps/frontend/authMf/src",
+  "projectType": "application",
+  "targets": {
+    "serve": {
+      "executor": "nx:run-commands",
+      "continuous": true,
+      "dependsOn": ["shell:serve"],
+      "options": {
+        "command": "vite",
+        "cwd": "apps/frontend/authMf"
+      }
+    },
+    "build": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "vite build",
+        "cwd": "apps/frontend/authMf"
+      }
+    }
+  }
+}

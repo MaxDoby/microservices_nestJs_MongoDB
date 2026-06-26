@@ -1,0 +1,23 @@
+{
+  "compileOnSave": false,
+  "compilerOptions": {
+    "rootDir": ".",
+    "sourceMap": true,
+    "declaration": false,
+    "ignoreDeprecations": "5.0",
+    "moduleResolution": "node16",
+    "emitDecoratorMetadata": true,
+    "experimentalDecorators": true,
+    "importHelpers": true,
+    "target": "es2015",
+    "module": "Node16",
+    "lib": ["es2020", "dom"],
+    "skipLibCheck": true,
+    "skipDefaultLibCheck": true,
+    "paths": {
+      "@financial-tracker/contracts": ["./libs/shared/contracts/src/index.ts"],
+      "@financial-tracker/types": ["./libs/shared/types/src/index.ts"]
+    }
+  },
+  "exclude": ["node_modules", "tmp"]
+}
