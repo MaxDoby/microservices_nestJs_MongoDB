@@ -4,6 +4,8 @@ import {
   CreateTransactionRequest,
   GetTransactionsRequest,
   TransactionResponse,
+  FinancialSummaryResponse,
+  GetFinancialSummaryRequest,
 } from '@financial-tracker/contracts';
 import { Model } from 'mongoose';
 import { Transaction, TransactionDocument } from './schemas/transaction.schema';
@@ -47,5 +49,31 @@ export class FinancialService {
       description: transaction.description,
       date: transaction.date,
     }));
+  }
+
+  async getSummary(
+    payload: GetFinancialSummaryRequest,
+  ): Promise<FinancialSummaryResponse> {
+    const transactions = await this.transactionModel.find({
+      userId: payload.userId,
+    });
+
+    const totalIncome = transactions
+      .filter((transaction) => transaction.type === 'income')
+      .reduce((sum, transaction) => sum + transaction.amount, 0);
+
+    const totalExpense = transactions
+      .filter((transaction) => transaction.type === 'expense')
+      .reduce((sum, transaction) => sum + transaction.amount, 0);
+
+    const balance = totalIncome - totalExpense;
+    const estimatedTax = totalIncome * 0.12;
+
+    return {
+      totalIncome,
+      totalExpense,
+      balance,
+      estimatedTax,
+    };
   }
 }

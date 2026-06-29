@@ -22,3 +22,14 @@ export interface TransactionResponse {
 export interface GetTransactionsRequest {
   userId: string;
 }
+
+export interface GetFinancialSummaryRequest {
+  userId: string;
+}
+
+export interface FinancialSummaryResponse {
+  totalIncome: number;
+  totalExpense: number;
+  balance: number;
+  estimatedTax: number;
+}
