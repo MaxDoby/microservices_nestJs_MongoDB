@@ -5,6 +5,8 @@ import {
   FINANCIAL_PATTERNS,
   GetTransactionsRequest,
   TransactionResponse,
+  FinancialReportResponse,
+  GetFinancialReportRequest,
 } from '@financial-tracker/contracts';
 import { FinancialService } from './financial.service';
 
@@ -24,5 +26,12 @@ export class FinancialController {
     @Payload() payload: GetTransactionsRequest,
   ): Promise<TransactionResponse[]> {
     return this.financialService.getTransactions(payload);
+  }
+
+  @MessagePattern(FINANCIAL_PATTERNS.GET_REPORT)
+  async getReport(
+    @Payload() payload: GetFinancialReportRequest,
+  ): Promise<FinancialReportResponse> {
+    return this.financialService.getReport(payload);
   }
 }

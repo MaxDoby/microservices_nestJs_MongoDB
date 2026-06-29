@@ -1,4 +1,9 @@
-import { HttpException, Inject, Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  HttpException,
+  Inject,
+  Injectable,
+} from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
 import {
   AUTH_PATTERNS,
@@ -11,8 +16,17 @@ import {
   TransactionResponse,
   ValidateTokenRequest,
   ValidateTokenResponse,
+  FinancialReportResponse,
+  GetFinancialReportRequest,
+  GenerateFinancialReportPdfRequest,
+  GenerateFinancialReportPdfResponse,
+  PDF_PATTERNS,
+  JwtPayload,
 } from '@financial-tracker/contracts';
-import { catchError, Observable } from 'rxjs';
+import { catchError, map, Observable, switchMap } from 'rxjs';
+import { GetFinancialReportQueryDto } from './dto/get-financial-report-query.dto';
+import { CreateTransactionDto } from './dto/create-transaction.dto';
+import { buildCreateTransactionRequest } from './mappers/transaction.mapper';
 
 type RpcError = {
   message?: string;
@@ -24,6 +38,7 @@ export class ApiGatewayService {
   constructor(
     @Inject('AUTH_SERVICE') private readonly authClient: ClientProxy,
     @Inject('FINANCIAL_SERVICE') private readonly financialClient: ClientProxy,
+    @Inject('PDF_SERVICE') private readonly pdfClient: ClientProxy,
   ) {}
 
   register(payload: RegisterRequest): Observable<AuthResponse> {
@@ -42,6 +57,34 @@ export class ApiGatewayService {
     throw new HttpException(
       error.message ?? 'Internal server error',
       error.statusCode ?? 500,
+    );
+  }
+
+  private getAuthToken(authorizationHeader?: string): string {
+    if (!authorizationHeader?.startsWith('Bearer ')) {
+      throw new BadRequestException(
+        'Authorization header must be Bearer token.',
+      );
+    }
+
+    return authorizationHeader.replace('Bearer ', '');
+  }
+
+  private validateDateRange(query: GetFinancialReportQueryDto): void {
+    if (query.startDate > query.endDate) {
+      throw new BadRequestException(
+        'startDate must be before or equal to endDate.',
+      );
+    }
+  }
+
+  private getCurrentUser(
+    authorizationHeader: string | undefined,
+  ): Observable<JwtPayload> {
+    const authToken = this.getAuthToken(authorizationHeader);
+
+    return this.validateToken({ authToken }).pipe(
+      map((response) => response.user),
     );
   }
 
@@ -73,5 +116,87 @@ export class ApiGatewayService {
     return this.financialClient
       .send(FINANCIAL_PATTERNS.GET_TRANSACTIONS, payload)
       .pipe(catchError((error: RpcError) => this.handleRpcError(error)));
+  }
+
+  getFinancialReport(
+    payload: GetFinancialReportRequest,
+  ): Observable<FinancialReportResponse> {
+    return this.financialClient
+      .send<
+        FinancialReportResponse,
+        GetFinancialReportRequest
+      >(FINANCIAL_PATTERNS.GET_REPORT, payload)
+      .pipe(catchError((error: RpcError) => this.handleRpcError(error)));
+  }
+
+  generateFinancialReportPdf(
+    payload: GenerateFinancialReportPdfRequest,
+  ): Observable<GenerateFinancialReportPdfResponse> {
+    return this.pdfClient
+      .send<
+        GenerateFinancialReportPdfResponse,
+        GenerateFinancialReportPdfRequest
+      >(PDF_PATTERNS.GENERATE_FINANCIAL_REPORT, payload)
+      .pipe(catchError((error) => this.handleRpcError(error)));
+  }
+
+  createTransactionForCurrentUser(
+    authorizationHeader: string | undefined,
+    body: CreateTransactionDto,
+  ): Observable<TransactionResponse> {
+    return this.getCurrentUser(authorizationHeader).pipe(
+      switchMap((user) =>
+        this.createTransaction(buildCreateTransactionRequest(user.sub, body)),
+      ),
+    );
+  }
+
+  getTransactionsForCurrentUser(
+    authorizationHeader: string | undefined,
+  ): Observable<TransactionResponse[]> {
+    return this.getCurrentUser(authorizationHeader).pipe(
+      switchMap((user) =>
+        this.getTransactions({
+          userId: user.sub,
+        }),
+      ),
+    );
+  }
+
+  getFinancialReportForCurrentUser(
+    authorizationHeader: string | undefined,
+    query: GetFinancialReportQueryDto,
+  ): Observable<FinancialReportResponse> {
+    this.validateDateRange(query);
+
+    return this.getCurrentUser(authorizationHeader).pipe(
+      switchMap((user) =>
+        this.getFinancialReport({
+          userId: user.sub,
+          period: {
+            type: query.period,
+            startDate: query.startDate,
+            endDate: query.endDate,
+          },
+        }),
+      ),
+    );
+  }
+
+  generateFinancialReportPdfForCurrentUser(
+    authorizationHeader: string | undefined,
+    query: GetFinancialReportQueryDto,
+  ): Observable<GenerateFinancialReportPdfResponse> {
+    return this.getFinancialReportForCurrentUser(
+      authorizationHeader,
+      query,
+    ).pipe(
+      switchMap((report) =>
+        this.generateFinancialReportPdf({
+          userId: report.userId,
+          report,
+        }),
+      ),
+    );
   }
 }

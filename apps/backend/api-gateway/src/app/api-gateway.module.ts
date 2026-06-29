@@ -39,6 +39,20 @@ import { ApiGatewayService } from './api-gateway.service';
           },
         }),
       },
+      {
+        name: 'PDF_SERVICE',
+        inject: [ConfigService],
+        useFactory: (configService: ConfigService) => ({
+          transport: Transport.RMQ,
+          options: {
+            urls: [configService.getOrThrow<string>('RABBITMQ_URL')],
+            queue: 'pdf_queue',
+            queueOptions: {
+              durable: true,
+            },
+          },
+        }),
+      },
     ]),
   ],
   controllers: [AuthController, FinancialController],

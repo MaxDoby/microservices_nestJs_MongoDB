@@ -1,6 +1,10 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { HydratedDocument } from 'mongoose';
-import { TransactionType } from '@financial-tracker/contracts';
+import {
+  TransactionType,
+  TransactionCategory,
+  TRANSACTION_CATEGORIES,
+} from '@financial-tracker/contracts';
 
 export type TransactionDocument = HydratedDocument<Transaction>;
 
@@ -15,8 +19,8 @@ export class Transaction {
   @Prop({ required: true })
   amount!: number;
 
-  @Prop({ required: true })
-  category!: string;
+  @Prop({ required: true, type: String, enum: TRANSACTION_CATEGORIES })
+  category!: TransactionCategory;
 
   @Prop()
   description?: string;
