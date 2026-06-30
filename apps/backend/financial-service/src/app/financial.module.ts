@@ -3,6 +3,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { Transaction, TransactionSchema } from './schemas/transaction.schema';
 import { MongooseModule } from '@nestjs/mongoose';
 import { FinancialController } from './financial.controller';
+import { TransactionRepository } from './repositories/transaction.repository';
 import { FinancialService } from './financial.service';
 
 @Module({
@@ -24,6 +25,6 @@ import { FinancialService } from './financial.service';
     ]),
   ],
   controllers: [FinancialController],
-  providers: [FinancialService],
+  providers: [FinancialService, TransactionRepository],
 })
 export class FinancialModule {}

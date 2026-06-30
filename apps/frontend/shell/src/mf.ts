@@ -10,17 +10,17 @@ const PROVIDERS: Array<{ alias: string; name: string; entry: string }> = [
   {
     alias: 'authMf',
     name: 'auth_mf',
-    entry: 'http://localhost:5101/remoteEntry.js',
+    entry: import.meta.env.VITE_AUTH_MF_URL,
   },
   {
     alias: 'financialMf',
     name: 'financial_mf',
-    entry: 'http://localhost:5102/remoteEntry.js',
+    entry: import.meta.env.VITE_FINANCIAL_MF_URL,
   },
   {
     alias: 'reportsMf',
     name: 'reports_mf',
-    entry: 'http://localhost:5103/remoteEntry.js',
+    entry: import.meta.env.VITE_REPORTS_MF_URL,
   },
 ];
 
@@ -30,10 +30,10 @@ const PROVIDERS: Array<{ alias: string; name: string; entry: string }> = [
 // `Cannot use import statement outside a module` (#RUNTIME-001).
 registerRemotes(PROVIDERS.map((remote) => ({ ...remote, type: 'module' })));
 
-export function lazyProvider<Props = unknown>(
+export const lazyProvider = <Props = unknown>(
   alias: string,
   exposeName: string,
-) {
+) => {
   return lazy(async () => {
     const mod = await loadRemote<{ default: ComponentType<Props> }>(
       `${alias}/${exposeName}`,
@@ -43,4 +43,4 @@ export function lazyProvider<Props = unknown>(
     }
     return { default: mod.default };
   });
-}
+};

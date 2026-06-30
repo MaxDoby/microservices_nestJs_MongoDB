@@ -2,8 +2,11 @@ import { Controller } from '@nestjs/common';
 import { MessagePattern, Payload } from '@nestjs/microservices';
 import {
   CreateTransactionRequest,
+  DeleteTransactionsRequest,
+  DeleteTransactionsResponse,
   FINANCIAL_PATTERNS,
   GetTransactionsRequest,
+  PaginatedTransactionsResponse,
   TransactionResponse,
   FinancialReportResponse,
   GetFinancialReportRequest,
@@ -24,8 +27,15 @@ export class FinancialController {
   @MessagePattern(FINANCIAL_PATTERNS.GET_TRANSACTIONS)
   async getTransactions(
     @Payload() payload: GetTransactionsRequest,
-  ): Promise<TransactionResponse[]> {
+  ): Promise<PaginatedTransactionsResponse> {
     return this.financialService.getTransactions(payload);
+  }
+
+  @MessagePattern(FINANCIAL_PATTERNS.DELETE_TRANSACTIONS)
+  async deleteTransactions(
+    @Payload() payload: DeleteTransactionsRequest,
+  ): Promise<DeleteTransactionsResponse> {
+    return this.financialService.deleteTransactions(payload);
   }
 
   @MessagePattern(FINANCIAL_PATTERNS.GET_REPORT)

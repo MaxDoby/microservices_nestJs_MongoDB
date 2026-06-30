@@ -8,11 +8,14 @@ import { ClientProxy } from '@nestjs/microservices';
 import {
   AUTH_PATTERNS,
   AuthResponse,
-  LoginRequest,
-  RegisterRequest,
   CreateTransactionRequest,
+  DeleteTransactionsRequest,
+  DeleteTransactionsResponse,
   FINANCIAL_PATTERNS,
   GetTransactionsRequest,
+  LoginRequest,
+  PaginatedTransactionsResponse,
+  RegisterRequest,
   TransactionResponse,
   ValidateTokenRequest,
   ValidateTokenResponse,
@@ -27,6 +30,8 @@ import { catchError, map, Observable, switchMap } from 'rxjs';
 import { GetFinancialReportQueryDto } from './dto/get-financial-report-query.dto';
 import { CreateTransactionDto } from './dto/create-transaction.dto';
 import { buildCreateTransactionRequest } from './mappers/transaction.mapper';
+import { GetTransactionsQueryDto } from './dto/get-transactions-query.dto';
+import { DeleteTransactionsDto } from './dto/delete-transactions.dto';
 
 type RpcError = {
   message?: string;
@@ -112,9 +117,23 @@ export class ApiGatewayService {
 
   getTransactions(
     payload: GetTransactionsRequest,
-  ): Observable<TransactionResponse[]> {
+  ): Observable<PaginatedTransactionsResponse> {
     return this.financialClient
-      .send(FINANCIAL_PATTERNS.GET_TRANSACTIONS, payload)
+      .send<
+        PaginatedTransactionsResponse,
+        GetTransactionsRequest
+      >(FINANCIAL_PATTERNS.GET_TRANSACTIONS, payload)
+      .pipe(catchError((error: RpcError) => this.handleRpcError(error)));
+  }
+
+  deleteTransactions(
+    payload: DeleteTransactionsRequest,
+  ): Observable<DeleteTransactionsResponse> {
+    return this.financialClient
+      .send<
+        DeleteTransactionsResponse,
+        DeleteTransactionsRequest
+      >(FINANCIAL_PATTERNS.DELETE_TRANSACTIONS, payload)
       .pipe(catchError((error: RpcError) => this.handleRpcError(error)));
   }
 
@@ -153,11 +172,26 @@ export class ApiGatewayService {
 
   getTransactionsForCurrentUser(
     authorizationHeader: string | undefined,
-  ): Observable<TransactionResponse[]> {
+    query: GetTransactionsQueryDto,
+  ): Observable<PaginatedTransactionsResponse> {
     return this.getCurrentUser(authorizationHeader).pipe(
-      switchMap((user) =>
+      switchMap(() =>
         this.getTransactions({
-          userId: user.sub,
+          page: query.page,
+          limit: query.limit,
+        }),
+      ),
+    );
+  }
+
+  deleteTransactionsForCurrentUser(
+    authorizationHeader: string | undefined,
+    body: DeleteTransactionsDto,
+  ): Observable<DeleteTransactionsResponse> {
+    return this.getCurrentUser(authorizationHeader).pipe(
+      switchMap(() =>
+        this.deleteTransactions({
+          transactionIds: body.transactionIds,
         }),
       ),
     );

@@ -1,11 +1,14 @@
-// Exposed by the federation plugin as 'authMf/App'.
-// Consumers render it lazily via `lazyProvider('authMf', 'App')`.
-export function App() {
-  return (
-    <section data-testid="authMf">
-      <h1>Hello from authMf</h1>
-    </section>
-  );
+import { AuthForm } from './components/AuthForm';
+import { useAuthForm } from './hooks/useAuthForm';
+
+interface AppProps {
+  onAuthenticated?: () => void;
 }
+
+export const App = ({ onAuthenticated }: AppProps) => {
+  const authForm = useAuthForm({ onAuthenticated });
+
+  return <AuthForm {...authForm} />;
+};
 
 export default App;

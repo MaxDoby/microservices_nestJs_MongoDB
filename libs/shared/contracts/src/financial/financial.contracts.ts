@@ -53,18 +53,24 @@ export interface TransactionResponse {
 }
 
 export interface GetTransactionsRequest {
-  userId: string;
+  page: number;
+  limit: number;
 }
 
-export interface GetFinancialSummaryRequest {
-  userId: string;
+export interface PaginatedTransactionsResponse {
+  items: TransactionResponse[];
+  page: number;
+  limit: number;
+  totalItems: number;
+  totalPages: number;
 }
 
-export interface FinancialSummaryResponse {
-  totalIncome: number;
-  totalExpense: number;
-  balance: number;
-  estimatedTax: number;
+export interface DeleteTransactionsRequest {
+  transactionIds: string[];
+}
+
+export interface DeleteTransactionsResponse {
+  deletedCount: number;
 }
 
 export type FinancialReportPeriod = 'monthly' | 'quarterly' | 'annual';

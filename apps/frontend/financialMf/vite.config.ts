@@ -7,6 +7,7 @@ import { federation } from '@module-federation/vite';
 const PORT = 5102;
 
 export default defineConfig({
+  envDir: '../../../',
   server: {
     port: PORT,
     strictPort: true,

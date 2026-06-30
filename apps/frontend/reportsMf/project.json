@@ -7,7 +7,6 @@
     "serve": {
       "executor": "nx:run-commands",
       "continuous": true,
-      "dependsOn": ["shell:serve"],
       "options": {
         "command": "vite",
         "cwd": "apps/frontend/reportsMf"

@@ -1,57 +1,69 @@
-import { Component, Suspense, type ReactNode } from 'react';
+import { useEffect, useState } from 'react';
+import { DashboardLayout } from './components/DashboardLayout';
+import { ProviderBoundary } from './components/ProviderBoundary';
 import { lazyProvider } from './mf';
+import type { DashboardView } from './types/dashboard.types';
 
-// ProviderBoundary catches the lazy() rejection that fires when a provider's
-// remoteEntry.js can't be fetched (provider not running, network error,
-// etc.). Without it any one missing provider unmounts the whole consumer
-// tree. React has no built-in functional error boundary so this is a class.
-// Wrap each <ProviderBoundary> in your router of choice if you need routing.
-class ProviderBoundary extends Component<
-  { children: ReactNode; name: string },
-  { error: Error | null }
-> {
-  state = { error: null as Error | null };
-  static getDerivedStateFromError(error: Error) {
-    return { error };
-  }
-  render() {
-    if (this.state.error) {
-      return (
-        <div role="alert">
-          <p>
-            Provider &quot;{this.props.name}&quot; unavailable:{' '}
-            {this.state.error.message}
-          </p>
-        </div>
-      );
-    }
-    return (
-      <Suspense fallback={<p>Loading {this.props.name}...</p>}>
-        {this.props.children}
-      </Suspense>
-    );
-  }
+interface AuthProviderProps {
+  onAuthenticated?: () => void;
 }
 
-const ProviderAuthMf = lazyProvider('authMf', 'App');
+const ProviderAuthMf = lazyProvider<AuthProviderProps>('authMf', 'App');
 const ProviderFinancialMf = lazyProvider('financialMf', 'App');
 const ProviderReportsMf = lazyProvider('reportsMf', 'App');
 
-export function App() {
-  return (
-    <main>
-      <h1>shell</h1>
-      <ProviderBoundary name="authMf">
-        <ProviderAuthMf />
-      </ProviderBoundary>
-      <ProviderBoundary name="financialMf">
-        <ProviderFinancialMf />
-      </ProviderBoundary>
-      <ProviderBoundary name="reportsMf">
-        <ProviderReportsMf />
-      </ProviderBoundary>
-    </main>
+export const App = () => {
+  const [isAuthenticated, setIsAuthenticated] = useState(() =>
+    Boolean(localStorage.getItem('authToken')),
   );
-}
+  const [activeView, setActiveView] = useState<DashboardView>(() =>
+    localStorage.getItem('authToken') ? 'transactions' : 'auth',
+  );
+
+  useEffect(() => {
+    if (!isAuthenticated && activeView !== 'auth') {
+      setActiveView('auth');
+    }
+  }, [activeView, isAuthenticated]);
+
+  const handleAuthenticated = () => {
+    setIsAuthenticated(true);
+    setActiveView('transactions');
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem('authToken');
+    localStorage.removeItem('authUser');
+    setIsAuthenticated(false);
+    setActiveView('auth');
+  };
+
+  return (
+    <DashboardLayout
+      activeView={activeView}
+      isAuthenticated={isAuthenticated}
+      onChangeView={setActiveView}
+      onLogout={handleLogout}
+    >
+      {activeView === 'auth' && (
+        <ProviderBoundary name="authMf">
+          <ProviderAuthMf onAuthenticated={handleAuthenticated} />
+        </ProviderBoundary>
+      )}
+
+      {activeView === 'transactions' && (
+        <ProviderBoundary name="financialMf">
+          <ProviderFinancialMf />
+        </ProviderBoundary>
+      )}
+
+      {activeView === 'reports' && (
+        <ProviderBoundary name="reportsMf">
+          <ProviderReportsMf />
+        </ProviderBoundary>
+      )}
+    </DashboardLayout>
+  );
+};
 
 export default App;

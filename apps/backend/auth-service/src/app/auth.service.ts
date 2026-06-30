@@ -1,6 +1,5 @@
 import { Injectable } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import { InjectModel } from '@nestjs/mongoose';
 import { RpcException } from '@nestjs/microservices';
 import {
   AuthResponse,
@@ -8,9 +7,10 @@ import {
   LoginRequest,
   RegisterRequest,
 } from '@financial-tracker/contracts';
-import { Model } from 'mongoose';
 import * as bcrypt from 'bcrypt';
-import { User, UserDocument } from './schemas/user.schema';
+import { UserDocument } from './schemas/user.schema';
+import { toAuthResponse, toJwtPayload } from './mappers/auth.mapper';
+import { UserRepository } from './repositories/user.repository';
 import {
   ValidateTokenResponse,
   ValidateTokenRequest,
@@ -19,12 +19,12 @@ import {
 @Injectable()
 export class AuthService {
   constructor(
-    @InjectModel(User.name) private readonly userModel: Model<UserDocument>,
+    private readonly userRepository: UserRepository,
     private readonly jwtService: JwtService,
   ) {}
 
   async register(payload: RegisterRequest): Promise<AuthResponse> {
-    const existingUser = await this.userModel.findOne({ email: payload.email });
+    const existingUser = await this.userRepository.findByEmail(payload.email);
 
     if (existingUser) {
       throw new RpcException({
@@ -35,26 +35,18 @@ export class AuthService {
 
     const hashedPass = await bcrypt.hash(payload.password, 10);
 
-    const user = await this.userModel.create({
+    const user = await this.userRepository.create({
       name: payload.name,
       surname: payload.surname,
       email: payload.email,
       password: hashedPass,
     });
 
-    return {
-      authToken: this.signAuthToken(user),
-      user: {
-        id: user.id,
-        name: user.name,
-        surname: user.surname,
-        email: user.email,
-      },
-    };
+    return toAuthResponse(user, this.signAuthToken(user));
   }
 
   async login(payload: LoginRequest): Promise<AuthResponse> {
-    const user = await this.userModel.findOne({ email: payload.email });
+    const user = await this.userRepository.findByEmail(payload.email);
 
     if (!user) {
       throw new RpcException({
@@ -75,24 +67,11 @@ export class AuthService {
       });
     }
 
-    return {
-      authToken: this.signAuthToken(user),
-      user: {
-        id: user.id,
-        name: user.name,
-        surname: user.surname,
-        email: user.email,
-      },
-    };
+    return toAuthResponse(user, this.signAuthToken(user));
   }
 
   private signAuthToken(user: UserDocument): string {
-    const jwtPayload: JwtPayload = {
-      sub: user.id,
-      email: user.email,
-    };
-
-    return this.jwtService.sign(jwtPayload);
+    return this.jwtService.sign(toJwtPayload(user));
   }
 
   async validateToken(
