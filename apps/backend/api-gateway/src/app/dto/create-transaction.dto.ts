@@ -16,7 +16,8 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class CreateTransactionDto {
   @ApiProperty({
-    description: 'Transaction direction. Income increases revenue, expense decreases profit.',
+    description:
+      'Transaction direction. Income increases revenue, expense decreases profit.',
     enum: ['income', 'expense'],
     example: 'income',
   })
@@ -24,7 +25,8 @@ export class CreateTransactionDto {
   type!: TransactionType;
 
   @ApiProperty({
-    description: 'Gross transaction amount. The current report model treats amounts as VAT-inclusive where VAT applies.',
+    description:
+      'Gross transaction amount. The current report model treats amounts as VAT-inclusive where VAT applies.',
     example: 1500,
     minimum: 0.01,
   })
@@ -33,7 +35,8 @@ export class CreateTransactionDto {
   amount!: number;
 
   @ApiProperty({
-    description: 'Business category used by reports to group revenue, expenses, payroll and VAT calculations.',
+    description:
+      'Business category used by reports to group revenue, expenses, payroll and VAT calculations.',
     enum: [...INCOME_CATEGORIES, ...EXPENSE_CATEGORIES],
     example: 'sales',
   })
@@ -49,7 +52,8 @@ export class CreateTransactionDto {
   description?: string;
 
   @ApiProperty({
-    description: 'Transaction date in ISO format. Reports filter transactions by this value.',
+    description:
+      'Transaction date in ISO format. Reports filter transactions by this value.',
     example: '2026-06-30',
     format: 'date',
   })

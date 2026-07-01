@@ -6,12 +6,12 @@ import {
   LoginRequest,
   RefreshTokenRequest,
   RegisterRequest,
-} from '@financial-tracker/contracts';
-import { AuthService } from './auth.service';
-import {
   ValidateTokenRequest,
   ValidateTokenResponse,
+  LogoutRequest,
+  LogoutResponse,
 } from '@financial-tracker/contracts';
+import { AuthService } from './auth.service';
 
 @Controller()
 export class AuthController {
@@ -32,6 +32,11 @@ export class AuthController {
     @Payload() payload: ValidateTokenRequest,
   ): Promise<ValidateTokenResponse> {
     return this.authService.validateToken(payload);
+  }
+
+  @MessagePattern(AUTH_PATTERNS.LOGOUT)
+  async logout(@Payload() payload: LogoutRequest): Promise<LogoutResponse> {
+    return this.authService.logout(payload);
   }
 
   @MessagePattern(AUTH_PATTERNS.REFRESH_TOKEN)

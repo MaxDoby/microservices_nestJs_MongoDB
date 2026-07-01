@@ -36,4 +36,10 @@ export class UserRepository {
       .updateOne({ _id: userId }, { refreshTokenHash })
       .exec();
   }
+
+  clearRefreshTokenHash(userId: string): Promise<unknown> {
+    return this.userModel
+      .updateOne({ _id: userId }, { $unset: { refreshTokenHash: '' } })
+      .exec();
+  }
 }

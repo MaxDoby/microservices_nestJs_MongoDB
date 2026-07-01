@@ -2,6 +2,7 @@ import { Body, Controller, HttpCode, HttpStatus, Post } from '@nestjs/common';
 import {
   AuthResponse,
   ValidateTokenResponse,
+  LogoutResponse,
 } from '@financial-tracker/contracts';
 import {
   ApiBadRequestResponse,
@@ -81,6 +82,12 @@ export class AuthController {
   @Post('login')
   login(@Body() body: LoginDto): Observable<AuthResponse> {
     return this.apiGatewayService.login(body);
+  }
+
+  @HttpCode(HttpStatus.OK)
+  @Post('logout')
+  logout(@Body() body: RefreshTokenDto): Observable<LogoutResponse> {
+    return this.apiGatewayService.logout(body);
   }
 
   @HttpCode(HttpStatus.OK)

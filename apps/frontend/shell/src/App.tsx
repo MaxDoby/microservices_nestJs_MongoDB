@@ -3,6 +3,7 @@ import { DashboardLayout } from './components/DashboardLayout';
 import { ProviderBoundary } from './components/ProviderBoundary';
 import { lazyProvider } from './mf';
 import type { DashboardView } from './types/dashboard.types';
+import { logoutRequest } from '@financial-tracker/frontend-auth';
 
 interface AuthProviderProps {
   onAuthenticated?: () => void;
@@ -31,10 +32,8 @@ export const App = () => {
     setActiveView('transactions');
   };
 
-  const handleLogout = () => {
-    localStorage.removeItem('accessToken');
-    localStorage.removeItem('refreshToken');
-    localStorage.removeItem('authUser');
+  const handleLogout = async () => {
+    await logoutRequest();
     setIsAuthenticated(false);
     setActiveView('auth');
   };

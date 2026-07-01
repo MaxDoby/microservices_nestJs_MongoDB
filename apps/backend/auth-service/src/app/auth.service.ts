@@ -8,15 +8,15 @@ import {
   LoginRequest,
   RegisterRequest,
   RefreshTokenRequest,
+  LogoutRequest,
+  LogoutResponse,
+  ValidateTokenResponse,
+  ValidateTokenRequest,
 } from '@financial-tracker/contracts';
 import * as bcrypt from 'bcrypt';
 import { UserDocument } from './schemas/user.schema';
 import { toAuthResponse, toJwtPayload } from './mappers/auth.mapper';
 import { UserRepository } from './repositories/user.repository';
-import {
-  ValidateTokenResponse,
-  ValidateTokenRequest,
-} from '@financial-tracker/contracts';
 
 @Injectable()
 export class AuthService {
@@ -112,10 +112,25 @@ export class AuthService {
   }
 
   async refreshToken(payload: RefreshTokenRequest): Promise<AuthResponse> {
+    const user = await this.getUserByValidRefreshToken(payload.refreshToken);
+
+    return this.buildAuthResponse(user);
+  }
+
+  async logout(payload: LogoutRequest): Promise<LogoutResponse> {
+    const user = await this.getUserByValidRefreshToken(payload.refreshToken);
+
+    await this.userRepository.clearRefreshTokenHash(user.id);
+
+    return { success: true };
+  }
+
+  private async getUserByValidRefreshToken(
+    refreshToken: string,
+  ): Promise<UserDocument> {
     try {
-      const tokenPayload = await this.jwtService.verifyAsync<JwtPayload>(
-        payload.refreshToken,
-      );
+      const tokenPayload =
+        await this.jwtService.verifyAsync<JwtPayload>(refreshToken);
 
       if (tokenPayload.type !== 'refresh') {
         throw new Error('Invalid token type.');
@@ -124,19 +139,19 @@ export class AuthService {
       const user = await this.userRepository.findById(tokenPayload.sub);
 
       if (!user?.refreshTokenHash) {
-        throw new Error('Refresh token not found');
+        throw new Error('Refresh token not found.');
       }
 
       const isRefreshTokenValid = await bcrypt.compare(
-        payload.refreshToken,
+        refreshToken,
         user.refreshTokenHash,
       );
 
       if (!isRefreshTokenValid) {
-        throw new Error('Invalid refresh token');
+        throw new Error('Invalid refresh token.');
       }
 
-      return this.buildAuthResponse(user);
+      return user;
     } catch {
       throw new RpcException({
         statusCode: 401,

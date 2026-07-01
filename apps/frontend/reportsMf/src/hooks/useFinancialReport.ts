@@ -24,7 +24,6 @@ export const useFinancialReport = () => {
   };
 
   const downloadPdf = async (filters: ReportFilters) => {
-    
     try {
       await downloadFinancialReportPdf(filters);
       setMessage('');

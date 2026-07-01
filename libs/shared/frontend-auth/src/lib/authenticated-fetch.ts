@@ -25,10 +25,31 @@ const getApiUrl = () => {
   return apiUrl;
 };
 
-const clearAuthStorage = () => {
+export const clearAuthStorage = () => {
   localStorage.removeItem('accessToken');
   localStorage.removeItem('refreshToken');
   localStorage.removeItem('authUser');
+};
+
+export const logoutRequest = async (): Promise<void> => {
+  const refreshToken = localStorage.getItem('refreshToken');
+
+  if (!refreshToken) {
+    clearAuthStorage();
+    return;
+  }
+
+  try {
+    await fetch(`${getApiUrl()}/auth/logout`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ refreshToken }),
+    });
+  } finally {
+    clearAuthStorage();
+  }
 };
 
 const refreshAccessToken = async (): Promise<string> => {

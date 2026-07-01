@@ -26,6 +26,8 @@ import {
   PDF_PATTERNS,
   JwtPayload,
   RefreshTokenRequest,
+  LogoutRequest,
+  LogoutResponse,
 } from '@financial-tracker/contracts';
 import { catchError, map, Observable, switchMap } from 'rxjs';
 import { GetFinancialReportQueryDto } from './dto/get-financial-report-query.dto';
@@ -65,6 +67,12 @@ export class ApiGatewayService {
         AuthResponse,
         RefreshTokenRequest
       >(AUTH_PATTERNS.REFRESH_TOKEN, payload)
+      .pipe(catchError((error: RpcError) => this.handleRpcError(error)));
+  }
+
+  logout(payload: LogoutRequest): Observable<LogoutResponse> {
+    return this.authClient
+      .send<LogoutResponse, LogoutRequest>(AUTH_PATTERNS.LOGOUT, payload)
       .pipe(catchError((error: RpcError) => this.handleRpcError(error)));
   }
 
