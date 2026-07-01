@@ -25,6 +25,7 @@ import {
   GenerateFinancialReportPdfResponse,
   PDF_PATTERNS,
   JwtPayload,
+  RefreshTokenRequest,
 } from '@financial-tracker/contracts';
 import { catchError, map, Observable, switchMap } from 'rxjs';
 import { GetFinancialReportQueryDto } from './dto/get-financial-report-query.dto';
@@ -55,6 +56,15 @@ export class ApiGatewayService {
   login(payload: LoginRequest): Observable<AuthResponse> {
     return this.authClient
       .send<AuthResponse, LoginRequest>(AUTH_PATTERNS.LOGIN, payload)
+      .pipe(catchError((error: RpcError) => this.handleRpcError(error)));
+  }
+
+  refreshToken(payload: RefreshTokenRequest): Observable<AuthResponse> {
+    return this.authClient
+      .send<
+        AuthResponse,
+        RefreshTokenRequest
+      >(AUTH_PATTERNS.REFRESH_TOKEN, payload)
       .pipe(catchError((error: RpcError) => this.handleRpcError(error)));
   }
 

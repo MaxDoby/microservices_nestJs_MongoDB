@@ -22,19 +22,8 @@ export const useTransactions = () => {
   const [message, setMessage] = useState('');
 
   const loadTransactions = async (nextPage = page) => {
-    const authToken = localStorage.getItem('authToken');
-
-    if (!authToken) {
-      setMessage('You must login first.');
-      return;
-    }
-
     try {
-      const data = await fetchTransactions(
-        authToken,
-        nextPage,
-        TRANSACTIONS_PER_PAGE,
-      );
+      const data = await fetchTransactions(nextPage, TRANSACTIONS_PER_PAGE);
       setTransactions(data.items);
       setPage(data.page);
       setTotalPages(data.totalPages);
@@ -49,16 +38,9 @@ export const useTransactions = () => {
   };
 
   const createTransaction = async (payload: CreateTransactionPayload) => {
-    const authToken = localStorage.getItem('authToken');
-
-    if (!authToken) {
-      setMessage('You must login first');
-      return;
-    }
-
     try {
-      await createTransactionRequest(authToken, payload);
-      const data = await fetchTransactions(authToken, 1, TRANSACTIONS_PER_PAGE);
+      await createTransactionRequest(payload);
+      const data = await fetchTransactions(1, TRANSACTIONS_PER_PAGE);
 
       setTransactions(data.items);
       setPage(data.page);
@@ -76,13 +58,6 @@ export const useTransactions = () => {
   };
 
   const deleteSelectedTransactions = async () => {
-    const authToken = localStorage.getItem('authToken');
-
-    if (!authToken) {
-      setMessage('You must login first');
-      return;
-    }
-
     if (selectedTransactionIds.length === 0) {
       setMessage('Select at least one transaction.');
       return;
@@ -94,7 +69,7 @@ export const useTransactions = () => {
           ? page - 1
           : page;
 
-      const data = await deleteTransactionsRequest(authToken, {
+      const data = await deleteTransactionsRequest({
         transactionIds: selectedTransactionIds,
       });
 

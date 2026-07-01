@@ -14,10 +14,10 @@ const ProviderReportsMf = lazyProvider('reportsMf', 'App');
 
 export const App = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(() =>
-    Boolean(localStorage.getItem('authToken')),
+    Boolean(localStorage.getItem('accessToken')),
   );
   const [activeView, setActiveView] = useState<DashboardView>(() =>
-    localStorage.getItem('authToken') ? 'transactions' : 'auth',
+    localStorage.getItem('accessToken') ? 'transactions' : 'auth',
   );
 
   useEffect(() => {
@@ -32,7 +32,8 @@ export const App = () => {
   };
 
   const handleLogout = () => {
-    localStorage.removeItem('authToken');
+    localStorage.removeItem('accessToken');
+    localStorage.removeItem('refreshToken');
     localStorage.removeItem('authUser');
     setIsAuthenticated(false);
     setActiveView('auth');

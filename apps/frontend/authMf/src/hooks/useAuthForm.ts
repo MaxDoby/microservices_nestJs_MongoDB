@@ -27,7 +27,8 @@ export const useAuthForm = ({ onAuthenticated }: UseAuthFormOptions = {}) => {
     try {
       const data = await authenticateRequest(mode, form);
 
-      localStorage.setItem('authToken', data.authToken);
+      localStorage.setItem('accessToken', data.accessToken);
+      localStorage.setItem('refreshToken', data.refreshToken);
       localStorage.setItem('authUser', JSON.stringify(data.user));
 
       setMessage(`Authenticated as ${data.user.email}`);

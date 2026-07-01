@@ -4,6 +4,7 @@ import {
   AUTH_PATTERNS,
   AuthResponse,
   LoginRequest,
+  RefreshTokenRequest,
   RegisterRequest,
 } from '@financial-tracker/contracts';
 import { AuthService } from './auth.service';
@@ -31,5 +32,12 @@ export class AuthController {
     @Payload() payload: ValidateTokenRequest,
   ): Promise<ValidateTokenResponse> {
     return this.authService.validateToken(payload);
+  }
+
+  @MessagePattern(AUTH_PATTERNS.REFRESH_TOKEN)
+  async refreshToken(
+    @Payload() payload: RefreshTokenRequest,
+  ): Promise<AuthResponse> {
+    return this.authService.refreshToken(payload);
   }
 }

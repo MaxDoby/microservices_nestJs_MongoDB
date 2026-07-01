@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { RpcException } from '@nestjs/microservices';
 import {
@@ -6,6 +7,7 @@ import {
   JwtPayload,
   LoginRequest,
   RegisterRequest,
+  RefreshTokenRequest,
 } from '@financial-tracker/contracts';
 import * as bcrypt from 'bcrypt';
 import { UserDocument } from './schemas/user.schema';
@@ -21,6 +23,7 @@ export class AuthService {
   constructor(
     private readonly userRepository: UserRepository,
     private readonly jwtService: JwtService,
+    private readonly configService: ConfigService,
   ) {}
 
   async register(payload: RegisterRequest): Promise<AuthResponse> {
@@ -33,7 +36,11 @@ export class AuthService {
       });
     }
 
-    const hashedPass = await bcrypt.hash(payload.password, 10);
+    const saltRounds = Number(
+      this.configService.getOrThrow<string>('BCRYPT_SALT_ROUNDS'),
+    );
+
+    const hashedPass = await bcrypt.hash(payload.password, saltRounds);
 
     const user = await this.userRepository.create({
       name: payload.name,
@@ -42,7 +49,7 @@ export class AuthService {
       password: hashedPass,
     });
 
-    return toAuthResponse(user, this.signAuthToken(user));
+    return this.buildAuthResponse(user);
   }
 
   async login(payload: LoginRequest): Promise<AuthResponse> {
@@ -67,11 +74,17 @@ export class AuthService {
       });
     }
 
-    return toAuthResponse(user, this.signAuthToken(user));
+    return this.buildAuthResponse(user);
   }
 
-  private signAuthToken(user: UserDocument): string {
-    return this.jwtService.sign(toJwtPayload(user));
+  private signAccessToken(user: UserDocument): string {
+    return this.jwtService.sign(toJwtPayload(user, 'access'));
+  }
+
+  private signRefreshToken(user: UserDocument): string {
+    return this.jwtService.sign(toJwtPayload(user, 'refresh'), {
+      expiresIn: '7d',
+    });
   }
 
   async validateToken(
@@ -81,6 +94,10 @@ export class AuthService {
       const user = await this.jwtService.verifyAsync<JwtPayload>(
         payload.authToken,
       );
+
+      if (user.type !== 'access') {
+        throw new Error('Invalid token type.');
+      }
 
       return {
         isValid: true,
@@ -92,5 +109,54 @@ export class AuthService {
         message: 'Invalid or expired token.',
       });
     }
+  }
+
+  async refreshToken(payload: RefreshTokenRequest): Promise<AuthResponse> {
+    try {
+      const tokenPayload = await this.jwtService.verifyAsync<JwtPayload>(
+        payload.refreshToken,
+      );
+
+      if (tokenPayload.type !== 'refresh') {
+        throw new Error('Invalid token type.');
+      }
+
+      const user = await this.userRepository.findById(tokenPayload.sub);
+
+      if (!user?.refreshTokenHash) {
+        throw new Error('Refresh token not found');
+      }
+
+      const isRefreshTokenValid = await bcrypt.compare(
+        payload.refreshToken,
+        user.refreshTokenHash,
+      );
+
+      if (!isRefreshTokenValid) {
+        throw new Error('Invalid refresh token');
+      }
+
+      return this.buildAuthResponse(user);
+    } catch {
+      throw new RpcException({
+        statusCode: 401,
+        message: 'Invalid or expired refresh token.',
+      });
+    }
+  }
+
+  private async buildAuthResponse(user: UserDocument): Promise<AuthResponse> {
+    const accessToken = this.signAccessToken(user);
+    const refreshToken = this.signRefreshToken(user);
+
+    const saltRounds = Number(
+      this.configService.getOrThrow<string>('BCRYPT_SALT_ROUNDS'),
+    );
+
+    const refreshTokenHash = await bcrypt.hash(refreshToken, saltRounds);
+
+    await this.userRepository.updateRefreshTokenHash(user.id, refreshTokenHash);
+
+    return toAuthResponse(user, accessToken, refreshToken);
   }
 }

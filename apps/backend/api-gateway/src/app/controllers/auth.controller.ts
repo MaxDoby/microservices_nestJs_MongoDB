@@ -15,6 +15,7 @@ import {
 } from '@nestjs/swagger';
 import { RegisterDto } from '../dto/register.dto';
 import { LoginDto } from '../dto/login.dto';
+import { RefreshTokenDto } from '../dto/refresh-token.dto';
 import { ValidateTokenDto } from '../dto/validate-token.dto';
 import { Observable } from 'rxjs';
 import { ApiGatewayService } from '../api-gateway.service';
@@ -80,6 +81,12 @@ export class AuthController {
   @Post('login')
   login(@Body() body: LoginDto): Observable<AuthResponse> {
     return this.apiGatewayService.login(body);
+  }
+
+  @HttpCode(HttpStatus.OK)
+  @Post('refresh-token')
+  refreshToken(@Body() body: RefreshTokenDto): Observable<AuthResponse> {
+    return this.apiGatewayService.refreshToken(body);
   }
 
   @ApiOperation({

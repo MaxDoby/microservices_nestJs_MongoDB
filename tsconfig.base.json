@@ -16,7 +16,10 @@
     "skipDefaultLibCheck": true,
     "paths": {
       "@financial-tracker/contracts": ["./libs/shared/contracts/src/index.ts"],
-      "@financial-tracker/types": ["./libs/shared/types/src/index.ts"]
+      "@financial-tracker/types": ["./libs/shared/types/src/index.ts"],
+      "@financial-tracker/frontend-auth": [
+        "./libs/shared/frontend-auth/src/index.ts"
+      ]
     }
   },
   "exclude": ["node_modules", "tmp"]

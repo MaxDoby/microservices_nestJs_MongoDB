@@ -23,4 +23,17 @@ export class UserRepository {
   create(payload: CreateUserPayload): Promise<UserDocument> {
     return this.userModel.create(payload);
   }
+
+  findById(userId: string): Promise<UserDocument | null> {
+    return this.userModel.findById(userId).exec();
+  }
+
+  updateRefreshTokenHash(
+    userId: string,
+    refreshTokenHash: string,
+  ): Promise<unknown> {
+    return this.userModel
+      .updateOne({ _id: userId }, { refreshTokenHash })
+      .exec();
+  }
 }

@@ -10,6 +10,10 @@ export interface LoginRequest {
   password: string;
 }
 
+export interface RefreshTokenRequest {
+  refreshToken: string;
+}
+
 export interface AuthUser {
   id: string;
   name: string;
@@ -18,13 +22,17 @@ export interface AuthUser {
 }
 
 export interface AuthResponse {
-  authToken: string;
+  accessToken: string;
+  refreshToken: string;
   user: AuthUser;
 }
+
+export type JwtTokenType = 'access' | 'refresh';
 
 export interface JwtPayload {
   sub: string;
   email: string;
+  type: JwtTokenType;
 }
 
 export interface ValidateTokenRequest {

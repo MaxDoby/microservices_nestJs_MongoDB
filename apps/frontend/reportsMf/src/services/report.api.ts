@@ -1,6 +1,5 @@
 import type { FinancialReport, ReportFilters } from '../types/report.types';
-
-const API_URL = import.meta.env.VITE_API_URL;
+import { authenticatedFetch } from '@financial-tracker/frontend-auth';
 
 const buildReportQuery = (filters: ReportFilters) => {
   const params = new URLSearchParams({
@@ -13,16 +12,11 @@ const buildReportQuery = (filters: ReportFilters) => {
 };
 
 export const fetchFinancialReport = async (
-  authToken: string,
   filters: ReportFilters,
 ): Promise<FinancialReport> => {
   const query = buildReportQuery(filters);
 
-  const response = await fetch(`${API_URL}/transactions/report?${query}`, {
-    headers: {
-      Authorization: `Bearer ${authToken}`,
-    },
-  });
+  const response = await authenticatedFetch(`/transactions/report?${query}`);
 
   const data = await response.json();
 
@@ -34,16 +28,13 @@ export const fetchFinancialReport = async (
 };
 
 export const downloadFinancialReportPdf = async (
-  authToken: string,
   filters: ReportFilters,
 ): Promise<void> => {
   const query = buildReportQuery(filters);
 
-  const response = await fetch(`${API_URL}/transactions/report/pdf?${query}`, {
-    headers: {
-      Authorization: `Bearer ${authToken}`,
-    },
-  });
+  const response = await authenticatedFetch(
+    `/transactions/report/pdf?${query}`,
+  );
 
   if (!response.ok) {
     const data = await response.json();

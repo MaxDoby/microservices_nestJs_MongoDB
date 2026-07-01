@@ -22,7 +22,7 @@ export const DashboardLayout = ({
       <header className="dashboard-header">
         <div>
           <h1>Financial Tracker</h1>
-          <p>Accounting dashboard</p>
+          <h4>Accounting dashboard</h4>
         </div>
 
         <DashboardNav

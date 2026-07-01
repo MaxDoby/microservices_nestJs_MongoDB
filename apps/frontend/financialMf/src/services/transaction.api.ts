@@ -4,11 +4,9 @@ import type {
   DeleteTransactionsPayload,
   PaginatedTransactions,
 } from '../types/transaction.types';
-
-const API_URL = import.meta.env.VITE_API_URL;
+import { authenticatedFetch } from '@financial-tracker/frontend-auth';
 
 export const fetchTransactions = async (
-  authToken: string,
   page: number,
   limit: number,
 ): Promise<PaginatedTransactions> => {
@@ -16,11 +14,7 @@ export const fetchTransactions = async (
     page: String(page),
     limit: String(limit),
   });
-  const response = await fetch(`${API_URL}/transactions?${searchParams}`, {
-    headers: {
-      Authorization: `Bearer ${authToken}`,
-    },
-  });
+  const response = await authenticatedFetch(`/transactions?${searchParams}`);
 
   const data = await response.json();
 
@@ -32,14 +26,12 @@ export const fetchTransactions = async (
 };
 
 export const createTransactionRequest = async (
-  authToken: string,
   payload: CreateTransactionPayload,
 ): Promise<Transaction> => {
-  const response = await fetch(`${API_URL}/transactions`, {
+  const response = await authenticatedFetch('/transactions', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      Authorization: `Bearer ${authToken}`,
     },
     body: JSON.stringify(payload),
   });
@@ -54,14 +46,12 @@ export const createTransactionRequest = async (
 };
 
 export const deleteTransactionsRequest = async (
-  authToken: string,
   payload: DeleteTransactionsPayload,
 ): Promise<{ deletedCount: number }> => {
-  const response = await fetch(`${API_URL}/transactions`, {
+  const response = await authenticatedFetch('/transactions', {
     method: 'DELETE',
     headers: {
       'Content-Type': 'application/json',
-      Authorization: `Bearer ${authToken}`,
     },
     body: JSON.stringify(payload),
   });

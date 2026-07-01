@@ -42,12 +42,15 @@ FINANCIAL_MONGO_URI=mongodb://root:root@localhost:27017/financial-tracker-financ
 RABBITMQ_URL=amqp://root:root@localhost:5673
 JWT_SECRET=change_me
 JWT_EXPIRES_IN=86400
+BCRYPT_SALT_ROUNDS=12
 CORS_ORIGINS=http://localhost:4200,http://127.0.0.1:4200
 
 VITE_API_URL=http://localhost:3000/api
 VITE_AUTH_MF_URL=http://localhost:5101/remoteEntry.js
 VITE_FINANCIAL_MF_URL=http://localhost:5102/remoteEntry.js
 VITE_REPORTS_MF_URL=http://localhost:5103/remoteEntry.js
+
+
 ```
 
 ## Start Infrastructure

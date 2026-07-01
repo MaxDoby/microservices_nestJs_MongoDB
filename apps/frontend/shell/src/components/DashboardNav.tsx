@@ -20,7 +20,7 @@ export const DashboardNav = ({
         className={activeView === 'auth' ? 'active' : ''}
         onClick={() => onChangeView('auth')}
       >
-        Auth
+        Sign In
       </button>
 
       {isAuthenticated && (

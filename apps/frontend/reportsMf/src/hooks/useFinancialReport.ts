@@ -10,15 +10,8 @@ export const useFinancialReport = () => {
   const [message, setMessage] = useState('');
 
   const loadReport = async (filters: ReportFilters) => {
-    const authToken = localStorage.getItem('authToken');
-
-    if (!authToken) {
-      setMessage('You must login first.');
-      return;
-    }
-
     try {
-      const data = await fetchFinancialReport(authToken, filters);
+      const data = await fetchFinancialReport(filters);
       setReport(data);
       setMessage('');
     } catch (error) {
@@ -31,15 +24,9 @@ export const useFinancialReport = () => {
   };
 
   const downloadPdf = async (filters: ReportFilters) => {
-    const authToken = localStorage.getItem('authToken');
-
-    if (!authToken) {
-      setMessage('You must login first.');
-      return;
-    }
-
+    
     try {
-      await downloadFinancialReportPdf(authToken, filters);
+      await downloadFinancialReportPdf(filters);
       setMessage('');
     } catch (error) {
       setMessage(
