@@ -54,6 +54,20 @@ import { AuthGuard } from './guards/auth.guards';
           },
         }),
       },
+      {
+        name: 'AUDIT_SERVICE',
+        inject: [ConfigService],
+        useFactory: (configService: ConfigService) => ({
+          transport: Transport.RMQ,
+          options: {
+            urls: [configService.getOrThrow<string>('RABBITMQ_URL')],
+            queue: 'audit_queue',
+            queueOptions: {
+              durable: true,
+            },
+          },
+        }),
+      },
     ]),
   ],
   controllers: [AuthController, FinancialController],

@@ -28,11 +28,19 @@ import {
   RefreshTokenRequest,
   LogoutRequest,
   LogoutResponse,
+  AUDIT_PATTERNS,
+  CreateAuditLogRequest,
+  AuditLogResponse,
 } from '@financial-tracker/contracts';
-import { catchError, Observable, switchMap } from 'rxjs';
+import { catchError, Observable, switchMap, map } from 'rxjs';
 import { GetFinancialReportQueryDto } from './dto/get-financial-report-query.dto';
 import { CreateTransactionDto } from './dto/create-transaction.dto';
 import { buildCreateTransactionRequest } from './mappers/transaction.mapper';
+import {
+  buildCreateTransactionAuditLog,
+  buildDeleteTransactionsAuditLog,
+  buildGenerateReportAuditLog,
+} from './mappers/audit.mapper';
 import { GetTransactionsQueryDto } from './dto/get-transactions-query.dto';
 import { DeleteTransactionsDto } from './dto/delete-transactions.dto';
 
@@ -47,6 +55,7 @@ export class ApiGatewayService {
     @Inject('AUTH_SERVICE') private readonly authClient: ClientProxy,
     @Inject('FINANCIAL_SERVICE') private readonly financialClient: ClientProxy,
     @Inject('PDF_SERVICE') private readonly pdfClient: ClientProxy,
+    @Inject('AUDIT_SERVICE') private readonly auditClient: ClientProxy,
   ) {}
 
   register(payload: RegisterRequest): Observable<AuthResponse> {
@@ -161,7 +170,15 @@ export class ApiGatewayService {
     user: JwtPayload,
     body: CreateTransactionDto,
   ): Observable<TransactionResponse> {
-    return this.createTransaction(buildCreateTransactionRequest(user.sub, body))
+    return this.createTransaction(
+      buildCreateTransactionRequest(user.sub, body),
+    ).pipe(
+      switchMap((transaction) =>
+        this.createAuditLog(
+          buildCreateTransactionAuditLog(user, transaction),
+        ).pipe(map(() => transaction)),
+      ),
+    );
   }
 
   getTransactionsForCurrentUser(
@@ -169,9 +186,9 @@ export class ApiGatewayService {
     query: GetTransactionsQueryDto,
   ): Observable<PaginatedTransactionsResponse> {
     return this.getTransactions({
-          page: query.page,
-          limit: query.limit,
-        })
+      page: query.page,
+      limit: query.limit,
+    });
   }
 
   deleteTransactionsForCurrentUser(
@@ -179,8 +196,14 @@ export class ApiGatewayService {
     body: DeleteTransactionsDto,
   ): Observable<DeleteTransactionsResponse> {
     return this.deleteTransactions({
-          transactionIds: body.transactionIds,
-        })
+      transactionIds: body.transactionIds,
+    }).pipe(
+      switchMap((deleteResult) =>
+        this.createAuditLog(
+          buildDeleteTransactionsAuditLog(user, body, deleteResult),
+        ).pipe(map(() => deleteResult)),
+      ),
+    );
   }
 
   getFinancialReportForCurrentUser(
@@ -190,23 +213,26 @@ export class ApiGatewayService {
     this.validateDateRange(query);
 
     return this.getFinancialReport({
-          userId: user.sub,
-          period: {
-            type: query.period,
-            startDate: query.startDate,
-            endDate: query.endDate,
-          },
-        })
+      userId: user.sub,
+      period: {
+        type: query.period,
+        startDate: query.startDate,
+        endDate: query.endDate,
+      },
+    }).pipe(
+      switchMap((report) =>
+        this.createAuditLog(buildGenerateReportAuditLog(user, report)).pipe(
+          map(() => report),
+        ),
+      ),
+    );
   }
 
   generateFinancialReportPdfForCurrentUser(
     user: JwtPayload,
     query: GetFinancialReportQueryDto,
   ): Observable<GenerateFinancialReportPdfResponse> {
-    return this.getFinancialReportForCurrentUser(
-      user,
-      query,
-    ).pipe(
+    return this.getFinancialReportForCurrentUser(user, query).pipe(
       switchMap((report) =>
         this.generateFinancialReportPdf({
           userId: report.userId,
@@ -214,5 +240,14 @@ export class ApiGatewayService {
         }),
       ),
     );
+  }
+
+  createAuditLog(payload: CreateAuditLogRequest): Observable<AuditLogResponse> {
+    return this.auditClient
+      .send<
+        AuditLogResponse,
+        CreateAuditLogRequest
+      >(AUDIT_PATTERNS.CREATE_LOG, payload)
+      .pipe(catchError((error: RpcError) => this.handleRpcError(error)));
   }
 }

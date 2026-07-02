@@ -5,17 +5,30 @@
 
 import { Logger } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
-import { AppModule } from './app/app.module';
+import { Transport } from '@nestjs/microservices';
+import { AuditModule } from './app/audit.module';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
-  const globalPrefix = 'api';
-  app.setGlobalPrefix(globalPrefix);
-  const port = process.env.PORT || 3000;
-  await app.listen(port);
-  Logger.log(
-    `🚀 Application is running on: http://localhost:${port}/${globalPrefix}`,
-  );
+  const rabbitMqUrl = process.env.RABBITMQ_URL;
+
+  if (!rabbitMqUrl) {
+    throw new Error('RABBITMQ_URL is required.');
+  }
+
+  const app = await NestFactory.createMicroservice(AuditModule, {
+    transport: Transport.RMQ,
+    options: {
+      urls: [rabbitMqUrl],
+      queue: 'audit_queue',
+      queueOptions: {
+        durable: true,
+      },
+    },
+  });
+
+  await app.listen();
+
+  Logger.log(`Audit service listening for RabbitMQ messages.`);
 }
 
 bootstrap();

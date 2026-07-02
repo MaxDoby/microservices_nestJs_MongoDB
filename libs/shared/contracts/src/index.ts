@@ -4,3 +4,5 @@ export * from './financial/financial.contracts';
 export * from './financial/financial.patterns';
 export * from './pdf/pdf.contracts';
 export * from './pdf/pdf.patterns';
+export * from './audit/audit.contracts';
+export * from './audit/audit.patterns';
