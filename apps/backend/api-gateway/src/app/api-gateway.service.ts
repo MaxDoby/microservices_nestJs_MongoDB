@@ -29,7 +29,7 @@ import {
   LogoutRequest,
   LogoutResponse,
 } from '@financial-tracker/contracts';
-import { catchError, map, Observable, switchMap } from 'rxjs';
+import { catchError, Observable, switchMap } from 'rxjs';
 import { GetFinancialReportQueryDto } from './dto/get-financial-report-query.dto';
 import { CreateTransactionDto } from './dto/create-transaction.dto';
 import { buildCreateTransactionRequest } from './mappers/transaction.mapper';
@@ -83,32 +83,12 @@ export class ApiGatewayService {
     );
   }
 
-  private getAuthToken(authorizationHeader?: string): string {
-    if (!authorizationHeader?.startsWith('Bearer ')) {
-      throw new BadRequestException(
-        'Authorization header must be Bearer token.',
-      );
-    }
-
-    return authorizationHeader.replace('Bearer ', '');
-  }
-
   private validateDateRange(query: GetFinancialReportQueryDto): void {
     if (query.startDate > query.endDate) {
       throw new BadRequestException(
         'startDate must be before or equal to endDate.',
       );
     }
-  }
-
-  private getCurrentUser(
-    authorizationHeader: string | undefined,
-  ): Observable<JwtPayload> {
-    const authToken = this.getAuthToken(authorizationHeader);
-
-    return this.validateToken({ authToken }).pipe(
-      map((response) => response.user),
-    );
   }
 
   validateToken(
@@ -178,69 +158,53 @@ export class ApiGatewayService {
   }
 
   createTransactionForCurrentUser(
-    authorizationHeader: string | undefined,
+    user: JwtPayload,
     body: CreateTransactionDto,
   ): Observable<TransactionResponse> {
-    return this.getCurrentUser(authorizationHeader).pipe(
-      switchMap((user) =>
-        this.createTransaction(buildCreateTransactionRequest(user.sub, body)),
-      ),
-    );
+    return this.createTransaction(buildCreateTransactionRequest(user.sub, body))
   }
 
   getTransactionsForCurrentUser(
-    authorizationHeader: string | undefined,
+    user: JwtPayload,
     query: GetTransactionsQueryDto,
   ): Observable<PaginatedTransactionsResponse> {
-    return this.getCurrentUser(authorizationHeader).pipe(
-      switchMap(() =>
-        this.getTransactions({
+    return this.getTransactions({
           page: query.page,
           limit: query.limit,
-        }),
-      ),
-    );
+        })
   }
 
   deleteTransactionsForCurrentUser(
-    authorizationHeader: string | undefined,
+    user: JwtPayload,
     body: DeleteTransactionsDto,
   ): Observable<DeleteTransactionsResponse> {
-    return this.getCurrentUser(authorizationHeader).pipe(
-      switchMap(() =>
-        this.deleteTransactions({
+    return this.deleteTransactions({
           transactionIds: body.transactionIds,
-        }),
-      ),
-    );
+        })
   }
 
   getFinancialReportForCurrentUser(
-    authorizationHeader: string | undefined,
+    user: JwtPayload,
     query: GetFinancialReportQueryDto,
   ): Observable<FinancialReportResponse> {
     this.validateDateRange(query);
 
-    return this.getCurrentUser(authorizationHeader).pipe(
-      switchMap((user) =>
-        this.getFinancialReport({
+    return this.getFinancialReport({
           userId: user.sub,
           period: {
             type: query.period,
             startDate: query.startDate,
             endDate: query.endDate,
           },
-        }),
-      ),
-    );
+        })
   }
 
   generateFinancialReportPdfForCurrentUser(
-    authorizationHeader: string | undefined,
+    user: JwtPayload,
     query: GetFinancialReportQueryDto,
   ): Observable<GenerateFinancialReportPdfResponse> {
     return this.getFinancialReportForCurrentUser(
-      authorizationHeader,
+      user,
       query,
     ).pipe(
       switchMap((report) =>

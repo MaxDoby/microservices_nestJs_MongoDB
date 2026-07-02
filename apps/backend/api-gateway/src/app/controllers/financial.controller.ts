@@ -3,7 +3,7 @@ import {
   Controller,
   Delete,
   Post,
-  Headers,
+  UseGuards,
   Get,
   Query,
   Res,
@@ -13,6 +13,7 @@ import {
   FinancialReportResponse,
   PaginatedTransactionsResponse,
   DeleteTransactionsResponse,
+  JwtPayload,
 } from '@financial-tracker/contracts';
 import {
   ApiBadRequestResponse,
@@ -26,6 +27,8 @@ import {
   ApiUnauthorizedResponse,
   ApiCreatedResponse,
 } from '@nestjs/swagger';
+import { AuthGuard } from '../guards/auth.guards';
+import { CurrentUser } from '../decorators/current-user.decorator';
 import { GetFinancialReportQueryDto } from '../dto/get-financial-report-query.dto';
 import { CreateTransactionDto } from '../dto/create-transaction.dto';
 import { DeleteTransactionsDto } from '../dto/delete-transactions.dto';
@@ -43,6 +46,7 @@ import {
 
 @ApiTags('Transactions')
 @ApiBearerAuth()
+@UseGuards(AuthGuard)
 @Controller('transactions')
 export class FinancialController {
   constructor(private readonly apiGatewayService: ApiGatewayService) {}
@@ -71,13 +75,10 @@ export class FinancialController {
   })
   @Post()
   createTransaction(
-    @Headers('authorization') authorizationHeader: string | undefined,
+    @CurrentUser() user: JwtPayload,
     @Body() body: CreateTransactionDto,
   ): Observable<TransactionResponse> {
-    return this.apiGatewayService.createTransactionForCurrentUser(
-      authorizationHeader,
-      body,
-    );
+    return this.apiGatewayService.createTransactionForCurrentUser(user, body);
   }
 
   @ApiOperation({
@@ -116,11 +117,11 @@ export class FinancialController {
   })
   @Get('report')
   getFinancialReport(
-    @Headers('authorization') authorizationHeader: string | undefined,
+    @CurrentUser() user: JwtPayload,
     @Query() query: GetFinancialReportQueryDto,
   ): Observable<FinancialReportResponse> {
     return this.apiGatewayService.getFinancialReportForCurrentUser(
-      authorizationHeader,
+      user,
       query,
     );
   }
@@ -169,12 +170,12 @@ export class FinancialController {
   })
   @Get('report/pdf')
   getFinancialReportPdf(
-    @Headers('authorization') authorizationHeader: string | undefined,
+    @CurrentUser() user: JwtPayload,
     @Query() query: GetFinancialReportQueryDto,
     @Res() response: PdfHttpResponse,
   ): Observable<void> {
     return this.apiGatewayService
-      .generateFinancialReportPdfForCurrentUser(authorizationHeader, query)
+      .generateFinancialReportPdfForCurrentUser(user, query)
       .pipe(
         map((pdf) => {
           const pdfBuffer = Buffer.from(pdf.contentBase64, 'base64');
@@ -221,11 +222,11 @@ export class FinancialController {
   })
   @Get()
   getTransactions(
-    @Headers('authorization') authorizationHeader: string | undefined,
+    @CurrentUser() user: JwtPayload,
     @Query() query: GetTransactionsQueryDto,
   ): Observable<PaginatedTransactionsResponse> {
     return this.apiGatewayService.getTransactionsForCurrentUser(
-      authorizationHeader,
+      user,
       query,
     );
   }
@@ -254,11 +255,11 @@ export class FinancialController {
   })
   @Delete()
   deleteTransactions(
-    @Headers('authorization') authorizationHeader: string | undefined,
+    @CurrentUser() user: JwtPayload,
     @Body() body: DeleteTransactionsDto,
   ): Observable<DeleteTransactionsResponse> {
     return this.apiGatewayService.deleteTransactionsForCurrentUser(
-      authorizationHeader,
+      user,
       body,
     );
   }
