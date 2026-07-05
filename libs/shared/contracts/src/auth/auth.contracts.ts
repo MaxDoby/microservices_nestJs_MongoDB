@@ -1,25 +1,40 @@
-export interface RegisterRequest {
-  name: string;
-  surname: string;
-  email: string;
-  password: string;
-}
+import { z } from 'zod';
 
-export interface LoginRequest {
-  email: string;
-  password: string;
-}
+export const registerRequestSchema = z.object({
+	name: z.string().min(1),
+	surname: z.string().min(1),
+	email: z.email(),
+	password: z.string().min(8)
+});
 
-export interface LogoutRequest {
-  refreshToken: string;
-}
+export type RegisterRequest = z.infer<typeof registerRequestSchema>;
+
+export const loginRequestSchema = z.object({
+	email: z.email(),
+	password: z.string().min(1),
+});
+
+export type LoginRequest = z.infer<typeof loginRequestSchema>;
+
+export const refreshTokenRequestSchema = z.object({
+	refreshToken: z.string().min(1),
+});
+
+export type RefreshTokenRequest = z.infer<typeof refreshTokenRequestSchema>;
+
+export const logoutRequestSchema = refreshTokenRequestSchema;
+
+export type LogoutRequest = z.infer<typeof logoutRequestSchema>;
+
+export const validateTokenRequestSchema = z.object({
+	authToken: z.string().min(1),
+});
+
+export type ValidateTokenRequest = z.infer<typeof validateTokenRequestSchema>; 
+
 
 export interface LogoutResponse {
   success: boolean;
-}
-
-export interface RefreshTokenRequest {
-  refreshToken: string;
 }
 
 export interface AuthUser {
@@ -41,10 +56,6 @@ export interface JwtPayload {
   sub: string;
   email: string;
   type: JwtTokenType;
-}
-
-export interface ValidateTokenRequest {
-  authToken: string;
 }
 
 export interface ValidateTokenResponse {
