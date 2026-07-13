@@ -1,12 +1,9 @@
 import { useEffect, useState } from 'react';
 import { DashboardLayout } from './components/DashboardLayout';
 import { ProviderBoundary } from './components/ProviderBoundary';
-import { lazyProvider } from './mf';
 import type { DashboardView } from './types/dashboard.types';
 import { logoutRequest } from '@financial-tracker/frontend-auth';
 import { RemoteElement } from './components/RemoteElement';
-
-const ProviderReportsMf = lazyProvider('reportsMf', 'App');
 
 export const App = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(() =>
@@ -70,7 +67,11 @@ export const App = () => {
 
       {activeView === 'reports' && (
         <ProviderBoundary name="reportsMf">
-          <ProviderReportsMf />
+          <RemoteElement
+            alias="reportsMf"
+            exposeName="element"
+            tagName="ft-reports"
+          />
         </ProviderBoundary>
       )}
     </DashboardLayout>

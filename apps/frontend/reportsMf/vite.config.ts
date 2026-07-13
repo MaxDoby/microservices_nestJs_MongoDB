@@ -37,7 +37,7 @@ export default defineConfig({
       name: 'reports_mf',
       filename: 'remoteEntry.js',
       exposes: {
-        './App': './src/App.tsx',
+        './element': './src/reports.element.tsx',
       },
       shared: {
         react: { singleton: true },
