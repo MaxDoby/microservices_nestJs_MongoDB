@@ -44,3 +44,14 @@ export const lazyProvider = <Props = unknown>(
     return { default: mod.default };
   });
 };
+
+export const loadProviderElement = async (
+  alias: string,
+  exposeName: string,
+) => {
+  const mod = await loadRemote(`${alias}/${exposeName}`);
+
+  if (!mod) {
+    throw new Error(`Could not load remote element: ${alias}/${exposeName}`);
+  }
+};

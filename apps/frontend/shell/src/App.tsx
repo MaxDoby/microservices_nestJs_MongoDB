@@ -4,12 +4,8 @@ import { ProviderBoundary } from './components/ProviderBoundary';
 import { lazyProvider } from './mf';
 import type { DashboardView } from './types/dashboard.types';
 import { logoutRequest } from '@financial-tracker/frontend-auth';
+import { RemoteElement } from './components/RemoteElement';
 
-interface AuthProviderProps {
-  onAuthenticated?: () => void;
-}
-
-const ProviderAuthMf = lazyProvider<AuthProviderProps>('authMf', 'App');
 const ProviderFinancialMf = lazyProvider('financialMf', 'App');
 const ProviderReportsMf = lazyProvider('reportsMf', 'App');
 
@@ -26,6 +22,14 @@ export const App = () => {
       setActiveView('auth');
     }
   }, [activeView, isAuthenticated]);
+
+  useEffect(() => {
+    window.addEventListener('ft:auth:authenticated', handleAuthenticated);
+
+    return () => {
+      window.removeEventListener('ft:auth:authenticated', handleAuthenticated);
+    };
+  }, []);
 
   const handleAuthenticated = () => {
     setIsAuthenticated(true);
@@ -47,7 +51,11 @@ export const App = () => {
     >
       {activeView === 'auth' && (
         <ProviderBoundary name="authMf">
-          <ProviderAuthMf onAuthenticated={handleAuthenticated} />
+          <RemoteElement
+            alias="authMf"
+            exposeName="element"
+            tagName="ft-auth"
+          />
         </ProviderBoundary>
       )}
 

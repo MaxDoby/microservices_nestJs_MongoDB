@@ -26,7 +26,7 @@ export default defineConfig({
       name: 'auth_mf',
       filename: 'remoteEntry.js',
       exposes: {
-        './App': './src/App.tsx',
+        './element': './src/auth.element.tsx',
       },
       shared: {
         react: { singleton: true },
