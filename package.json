@@ -2,7 +2,21 @@
   "name": "@financial-tracker/source",
   "version": "0.0.0",
   "license": "MIT",
-  "scripts": {},
+  "scripts": {
+    "infra:up": "docker compose up -d",
+    "infra:down": "docker compose down",
+    "serve:api": "nx serve api-gateway",
+    "serve:auth": "nx serve auth-service",
+    "serve:financial": "nx serve financial-service",
+    "serve:pdf": "nx serve pdf-service",
+    "serve:audit": "nx serve audit-service",
+    "serve:shell": "nx serve shell",
+    "serve:auth-mf": "nx serve authMf",
+    "serve:financial-mf": "nx serve financialMf",
+    "serve:reports-mf": "nx serve reportsMf",
+    "build:all": "nx run-many -t build --all",
+    "lint:all": "nx run-many -t lint --all"
+  },
   "private": true,
   "devDependencies": {
     "@eslint/js": "^9.8.0",

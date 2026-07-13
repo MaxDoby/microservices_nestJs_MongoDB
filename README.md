@@ -53,37 +53,25 @@ VITE_REPORTS_MF_URL=http://localhost:5103/remoteEntry.js
 
 ```
 
-## Start Infrastructure
+## Start Backend With Docker
 
 ```sh
-docker compose up -d
+npm run infra:up
 ```
+
+This starts MongoDB, RabbitMQ and all backend services:
+
+- `api-gateway`
+- `auth-service`
+- `financial-service`
+- `pdf-service`
+- `audit-service`
 
 MongoDB runs on `localhost:27017`.
 
 RabbitMQ runs on `localhost:5673`.
 
 RabbitMQ Management UI runs on `http://localhost:15673`.
-
-## Start Backend Services
-
-Run each command in a separate terminal:
-
-```sh
-npx nx serve auth-service
-```
-
-```sh
-npx nx serve financial-service
-```
-
-```sh
-npx nx serve pdf-service
-```
-
-```sh
-npx nx serve api-gateway
-```
 
 The API Gateway runs on:
 
@@ -97,8 +85,65 @@ Swagger API documentation runs on:
 http://localhost:3000/api/docs
 ```
 
+To stop the backend stack:
+
+```sh
+npm run infra:down
+```
+
+## Start Backend Services Manually
+
+Use this mode when debugging a specific backend service outside Docker. MongoDB
+and RabbitMQ must still be running.
+
+```sh
+npm run serve:auth
+```
+
+```sh
+npm run serve:financial
+```
+
+```sh
+npm run serve:pdf
+```
+
+```sh
+npm run serve:audit
+```
+
+```sh
+npm run serve:api
+```
+
 The Swagger page documents public controllers, request DTO properties, response
 schemas, Bearer authorization, and common error statuses.
+
+## Start Frontend Services
+
+Run each command in a separate terminal:
+
+```sh
+npm run serve:auth-mf
+```
+
+```sh
+npm run serve:financial-mf
+```
+
+```sh
+npm run serve:reports-mf
+```
+
+```sh
+npm run serve:shell
+```
+
+The shell application runs on:
+
+```txt
+http://localhost:4200
+```
 
 ## API Endpoints
 
@@ -143,8 +188,8 @@ metadata together with the transaction list.
 ## Verify Project
 
 ```sh
-npx nx run-many -t build --all
-npx nx run-many -t lint --all
+npm run build:all
+npm run lint:all
 npx nx run-many -t test --all
 ```
 

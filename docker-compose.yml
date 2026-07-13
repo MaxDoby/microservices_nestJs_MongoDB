@@ -22,5 +22,77 @@ services:
       RABBITMQ_DEFAULT_USER: root
       RABBITMQ_DEFAULT_PASS: root
 
+  auth-service:
+    build:
+      context: .
+      dockerfile: apps/backend/auth-service/Dockerfile
+    container_name: financial-tracker-auth-service
+    restart: unless-stopped
+    depends_on:
+      - mongo
+      - rabbitmq
+    environment:
+      AUTH_MONGO_URI: mongodb://root:root@mongo:27017/financial-tracker-auth?authSource=admin
+      RABBITMQ_URL: amqp://root:root@rabbitmq:5672
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_EXPIRES_IN: ${JWT_EXPIRES_IN}
+      BCRYPT_SALT_ROUNDS: ${BCRYPT_SALT_ROUNDS}
+
+  financial-service:
+    build:
+      context: .
+      dockerfile: apps/backend/financial-service/Dockerfile
+    container_name: financial-tracker-financial-service
+    restart: unless-stopped
+    depends_on:
+      - mongo
+      - rabbitmq
+    environment:
+      FINANCIAL_MONGO_URI: mongodb://root:root@mongo:27017/financial-tracker-financial?authSource=admin
+      RABBITMQ_URL: amqp://root:root@rabbitmq:5672
+
+  pdf-service:
+    build:
+      context: .
+      dockerfile: apps/backend/pdf-service/Dockerfile
+    container_name: financial-tracker-pdf-service
+    restart: unless-stopped
+    depends_on:
+      - rabbitmq
+    environment:
+      RABBITMQ_URL: amqp://root:root@rabbitmq:5672
+
+  audit-service:
+    build:
+      context: .
+      dockerfile: apps/backend/audit-service/Dockerfile
+    container_name: financial-tracker-audit-service
+    restart: unless-stopped
+    depends_on:
+      - mongo
+      - rabbitmq
+    environment:
+      AUDIT_MONGO_URI: mongodb://root:root@mongo:27017/financial-tracker-audit?authSource=admin
+      RABBITMQ_URL: amqp://root:root@rabbitmq:5672
+
+  api-gateway:
+    build:
+      context: .
+      dockerfile: apps/backend/api-gateway/Dockerfile
+    container_name: financial-tracker-api-gateway
+    restart: unless-stopped
+    depends_on:
+      - rabbitmq
+      - auth-service
+      - financial-service
+      - pdf-service
+      - audit-service
+    ports:
+      - '3000:3000'
+    environment:
+      PORT: 3000
+      RABBITMQ_URL: amqp://root:root@rabbitmq:5672
+      CORS_ORIGINS: ${CORS_ORIGINS}
+
 volumes:
   mongo-data:
