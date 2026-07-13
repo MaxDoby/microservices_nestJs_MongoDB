@@ -6,7 +6,6 @@ import type { DashboardView } from './types/dashboard.types';
 import { logoutRequest } from '@financial-tracker/frontend-auth';
 import { RemoteElement } from './components/RemoteElement';
 
-const ProviderFinancialMf = lazyProvider('financialMf', 'App');
 const ProviderReportsMf = lazyProvider('reportsMf', 'App');
 
 export const App = () => {
@@ -61,7 +60,11 @@ export const App = () => {
 
       {activeView === 'transactions' && (
         <ProviderBoundary name="financialMf">
-          <ProviderFinancialMf />
+          <RemoteElement
+            alias="financialMf"
+            exposeName="element"
+            tagName="ft-transactions"
+          />
         </ProviderBoundary>
       )}
 

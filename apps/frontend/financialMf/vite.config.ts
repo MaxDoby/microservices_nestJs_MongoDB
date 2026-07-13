@@ -37,7 +37,7 @@ export default defineConfig({
       name: 'financial_mf',
       filename: 'remoteEntry.js',
       exposes: {
-        './App': './src/App.tsx',
+        './element': './src/financial.element.tsx',
       },
       shared: {
         react: { singleton: true },
