@@ -26,7 +26,7 @@ export default defineConfig({
     alias: {
       '@financial-tracker/frontend-auth': fileURLToPath(
         new URL(
-          '../../../libs/shared/frontend-auth/src/index.ts',
+          '../../../libs/frontend-auth/src/index.ts',
           import.meta.url,
         ),
       ),

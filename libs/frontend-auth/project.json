@@ -1,0 +1,19 @@
+{
+  "name": "frontend-auth",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/frontend-auth/src",
+  "projectType": "library",
+  "tags": [],
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/libs/frontend-auth",
+        "main": "libs/frontend-auth/src/index.ts",
+        "tsConfig": "libs/frontend-auth/tsconfig.lib.json",
+        "assets": ["libs/frontend-auth/*.md"]
+      }
+    }
+  }
+}

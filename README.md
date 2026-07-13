@@ -21,8 +21,8 @@ Frontend:
 
 Shared libraries:
 
-- `libs/shared/contracts`: shared DTOs and message patterns.
-- `libs/shared/types`: simple shared TypeScript types.
+- `libs/contracts`: shared DTOs and message patterns.
+- `libs/types`: simple shared TypeScript types.
 
 ## Requirements
 
