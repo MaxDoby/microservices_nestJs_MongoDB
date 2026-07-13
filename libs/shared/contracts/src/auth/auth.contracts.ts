@@ -1,23 +1,23 @@
 import { z } from 'zod';
 
 export const registerRequestSchema = z.object({
-	name: z.string().min(1),
-	surname: z.string().min(1),
-	email: z.email(),
-	password: z.string().min(8)
+  name: z.string().min(1),
+  surname: z.string().min(1),
+  email: z.email(),
+  password: z.string().min(8),
 });
 
 export type RegisterRequest = z.infer<typeof registerRequestSchema>;
 
 export const loginRequestSchema = z.object({
-	email: z.email(),
-	password: z.string().min(1),
+  email: z.email(),
+  password: z.string().min(1),
 });
 
 export type LoginRequest = z.infer<typeof loginRequestSchema>;
 
 export const refreshTokenRequestSchema = z.object({
-	refreshToken: z.string().min(1),
+  refreshToken: z.string().min(1),
 });
 
 export type RefreshTokenRequest = z.infer<typeof refreshTokenRequestSchema>;
@@ -27,38 +27,49 @@ export const logoutRequestSchema = refreshTokenRequestSchema;
 export type LogoutRequest = z.infer<typeof logoutRequestSchema>;
 
 export const validateTokenRequestSchema = z.object({
-	authToken: z.string().min(1),
+  authToken: z.string().min(1),
 });
 
-export type ValidateTokenRequest = z.infer<typeof validateTokenRequestSchema>; 
+export type ValidateTokenRequest = z.infer<typeof validateTokenRequestSchema>;
 
+export const logoutResponseSchema = z.object({
+  success: z.boolean(),
+});
 
-export interface LogoutResponse {
-  success: boolean;
-}
+export type LogoutResponse = z.infer<typeof logoutResponseSchema>;
 
-export interface AuthUser {
-  id: string;
-  name: string;
-  surname: string;
-  email: string;
-}
+export const authUserSchema = z.object({
+  id: z.string(),
+  name: z.string().min(1),
+  surname: z.string().min(1),
+  email: z.email(),
+});
 
-export interface AuthResponse {
-  accessToken: string;
-  refreshToken: string;
-  user: AuthUser;
-}
+export type AuthUser = z.infer<typeof authUserSchema>;
 
-export type JwtTokenType = 'access' | 'refresh';
+export const authResponseSchema = z.object({
+  accessToken: z.string().min(1),
+  refreshToken: z.string().min(1),
+  user: authUserSchema,
+});
 
-export interface JwtPayload {
-  sub: string;
-  email: string;
-  type: JwtTokenType;
-}
+export type AuthResponse = z.infer<typeof authResponseSchema>;
 
-export interface ValidateTokenResponse {
-  isValid: boolean;
-  user: JwtPayload;
-}
+export const jwtTokenTypeSchema = z.enum(['access', 'refresh']);
+
+export type JwtTokenType = z.infer<typeof jwtTokenTypeSchema>;
+
+export const jwtPayloadSchema = z.object({
+  sub: z.string().min(1),
+  email: z.email(),
+  type: jwtTokenTypeSchema,
+});
+
+export type JwtPayload = z.infer<typeof jwtPayloadSchema>;
+
+export const validateTokenResponseSchema = z.object({
+  isValid: z.boolean(),
+  user: jwtPayloadSchema,
+});
+
+export type ValidateTokenResponse = z.infer<typeof validateTokenResponseSchema>;

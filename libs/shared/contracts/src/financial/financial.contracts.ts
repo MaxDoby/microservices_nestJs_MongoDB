@@ -1,79 +1,4 @@
-export type TransactionType = 'income' | 'expense';
-
-export interface CreateIncomeTransactionRequest {
-  userId: string;
-  type: 'income';
-  amount: number;
-  category: IncomeCategory;
-  description?: string;
-  date: string;
-}
-
-export interface CreateExpenseTransactionRequest {
-  userId: string;
-  type: 'expense';
-  amount: number;
-  category: ExpenseCategory;
-  description?: string;
-  date: string;
-}
-
-export type CreateTransactionRequest =
-  | CreateIncomeTransactionRequest
-  | CreateExpenseTransactionRequest;
-
-export interface CreateIncomeTransactionBody {
-  type: 'income';
-  amount: number;
-  category: IncomeCategory;
-  description?: string;
-  date: string;
-}
-
-export interface CreateExpenseTransactionBody {
-  type: 'expense';
-  amount: number;
-  category: ExpenseCategory;
-  description?: string;
-  date: string;
-}
-
-export type CreateTransactionBody =
-  | CreateIncomeTransactionBody
-  | CreateExpenseTransactionBody;
-
-export interface TransactionResponse {
-  id: string;
-  userId: string;
-  type: TransactionType;
-  amount: number;
-  category: TransactionCategory;
-  description?: string;
-  date: string;
-}
-
-export interface GetTransactionsRequest {
-  page: number;
-  limit: number;
-}
-
-export interface PaginatedTransactionsResponse {
-  items: TransactionResponse[];
-  page: number;
-  limit: number;
-  totalItems: number;
-  totalPages: number;
-}
-
-export interface DeleteTransactionsRequest {
-  transactionIds: string[];
-}
-
-export interface DeleteTransactionsResponse {
-  deletedCount: number;
-}
-
-export type FinancialReportPeriod = 'monthly' | 'quarterly' | 'annual';
+import { z } from 'zod';
 
 export const EXPENSE_CATEGORIES = [
   'salary',
@@ -91,7 +16,9 @@ export const EXPENSE_CATEGORIES = [
   'other',
 ] as const;
 
-export type ExpenseCategory = (typeof EXPENSE_CATEGORIES)[number];
+export const expenseCategorySchema = z.enum(EXPENSE_CATEGORIES);
+
+export type ExpenseCategory = z.infer<typeof expenseCategorySchema>;
 
 export const INCOME_CATEGORIES = [
   'sales',
@@ -100,14 +27,103 @@ export const INCOME_CATEGORIES = [
   'other',
 ] as const;
 
-export type IncomeCategory = (typeof INCOME_CATEGORIES)[number];
+export const incomeCategorySchema = z.enum(INCOME_CATEGORIES);
+
+export type IncomeCategory = z.infer<typeof incomeCategorySchema>;
+
+export const transactionTypeSchema = z.enum(['income', 'expense']);
+
+export type TransactionType = z.infer<typeof transactionTypeSchema>;
+
+export const createIncomeTransactionBodySchema = z.object({
+  type: z.literal('income'),
+  amount: z.number().positive(),
+  category: incomeCategorySchema,
+  description: z.string().optional(),
+  date: z.string(),
+});
+
+export const createExpenseTransactionBodySchema = z.object({
+  type: z.literal('expense'),
+  amount: z.number().positive(),
+  category: expenseCategorySchema,
+  description: z.string().optional(),
+  date: z.string(),
+});
+
+export const createTransactionBodySchema = z.discriminatedUnion('type', [
+  createIncomeTransactionBodySchema,
+  createExpenseTransactionBodySchema,
+]);
+
+export type CreateTransactionBody = z.infer<typeof createTransactionBodySchema>;
+
+export const createIncomeTransactionRequestSchema =
+  createIncomeTransactionBodySchema.extend({
+    userId: z.string().min(1),
+  });
+
+export const createExpenseTransactionRequestSchema =
+  createExpenseTransactionBodySchema.extend({
+    userId: z.string().min(1),
+  });
+
+export const createTransactionRequestSchema = z.discriminatedUnion('type', [
+  createIncomeTransactionRequestSchema,
+  createExpenseTransactionRequestSchema,
+]);
+
+export type CreateTransactionRequest = z.infer<
+  typeof createTransactionRequestSchema
+>;
 
 export const TRANSACTION_CATEGORIES = [
   ...EXPENSE_CATEGORIES,
   ...INCOME_CATEGORIES,
 ] as const;
 
-export type TransactionCategory = (typeof TRANSACTION_CATEGORIES)[number];
+export const transactionCategorySchema = z.enum(TRANSACTION_CATEGORIES);
+
+export type TransactionCategory = z.infer<typeof transactionCategorySchema>;
+
+export const transactionResponseSchema = z.object({
+  id: z.string().min(1),
+  userId: z.string().min(1),
+  type: transactionTypeSchema,
+  amount: z.number().positive(),
+  category: transactionCategorySchema,
+  description: z.string().optional(),
+  date: z.string(),
+});
+
+export type TransactionResponse = z.infer<typeof transactionResponseSchema>;
+
+export interface GetTransactionsRequest {
+  page: number;
+  limit: number;
+}
+
+export const paginatedTransactionsResponseSchema = z.object({
+  items: z.array(transactionResponseSchema),
+  page: z.number().int().positive(),
+  limit: z.number().int().positive(),
+  totalItems: z.number().int().nonnegative(),
+  totalPages: z.number().int().nonnegative(),
+});
+
+export type PaginatedTransactionsResponse = z.infer<
+  typeof paginatedTransactionsResponseSchema
+>;
+
+export interface DeleteTransactionsRequest {
+  transactionIds: string[];
+}
+
+export interface DeleteTransactionsResponse {
+  deletedCount: number;
+}
+
+export type FinancialReportPeriod = 'monthly' | 'quarterly' | 'annual';
 
 export interface TaxConfig {
   vatRate: number;
