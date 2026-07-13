@@ -1,4 +1,3 @@
-import { lazy, type ComponentType } from 'react';
 import { registerRemotes, loadRemote } from '@module-federation/runtime';
 
 // The providers this consumer loads at runtime. Edit `entry` to point at a
@@ -30,20 +29,6 @@ const PROVIDERS: Array<{ alias: string; name: string; entry: string }> = [
 // `Cannot use import statement outside a module` (#RUNTIME-001).
 registerRemotes(PROVIDERS.map((remote) => ({ ...remote, type: 'module' })));
 
-export const lazyProvider = <Props = unknown>(
-  alias: string,
-  exposeName: string,
-) => {
-  return lazy(async () => {
-    const mod = await loadRemote<{ default: ComponentType<Props> }>(
-      `${alias}/${exposeName}`,
-    );
-    if (!mod) {
-      throw new Error(`Could not load remote module: ${alias}/${exposeName}`);
-    }
-    return { default: mod.default };
-  });
-};
 
 export const loadProviderElement = async (
   alias: string,
