@@ -1,73 +1,27 @@
-export type TransactionType = 'income' | 'expense';
+import {
+  EXPENSE_CATEGORIES,
+  INCOME_CATEGORIES,
+  type CreateTransactionHttpBody,
+  type DeleteTransactionsRequest,
+  type ExpenseCategory,
+  type IncomeCategory,
+  type PaginatedTransactionsResponse,
+  type TransactionCategory,
+  type TransactionResponse,
+  type TransactionType,
+} from '@financial-tracker/contracts';
 
-export type IncomeCategory = 'sales' | 'services' | 'consulting' | 'other';
+export type Transaction = TransactionResponse;
+export type PaginatedTransactions = PaginatedTransactionsResponse;
+export type CreateTransactionPayload = CreateTransactionHttpBody;
+export type DeleteTransactionsPayload = DeleteTransactionsRequest;
 
-export type ExpenseCategory =
-  | 'salary'
-  | 'rent'
-  | 'utilities'
-  | 'leasing'
-  | 'office'
-  | 'services'
-  | 'maintenance'
-  | 'materials'
-  | 'equipment'
-  | 'transport'
-  | 'marketing'
-  | 'software'
-  | 'other';
+export type {
+  ExpenseCategory,
+  IncomeCategory,
+  TransactionCategory,
+  TransactionType,
+};
 
-export type TransactionCategory = IncomeCategory | ExpenseCategory;
-
-export interface Transaction {
-  id: string;
-  userId: string;
-  type: TransactionType;
-  amount: number;
-  category: TransactionCategory;
-  description?: string;
-  date: string;
-}
-
-export interface PaginatedTransactions {
-  items: Transaction[];
-  page: number;
-  limit: number;
-  totalItems: number;
-  totalPages: number;
-}
-
-export const incomeCategories: IncomeCategory[] = [
-  'sales',
-  'services',
-  'consulting',
-  'other',
-];
-
-export const expenseCategories: ExpenseCategory[] = [
-  'salary',
-  'rent',
-  'utilities',
-  'leasing',
-  'office',
-  'services',
-  'maintenance',
-  'materials',
-  'equipment',
-  'transport',
-  'marketing',
-  'software',
-  'other',
-];
-
-export interface CreateTransactionPayload {
-  type: TransactionType;
-  amount: number;
-  category: TransactionCategory;
-  description?: string;
-  date: string;
-}
-
-export interface DeleteTransactionsPayload {
-  transactionIds: string[];
-}
+export const incomeCategories: IncomeCategory[] = [...INCOME_CATEGORIES];
+export const expenseCategories: ExpenseCategory[] = [...EXPENSE_CATEGORIES];

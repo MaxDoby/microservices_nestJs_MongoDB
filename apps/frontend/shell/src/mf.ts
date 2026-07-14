@@ -1,10 +1,8 @@
 import { registerRemotes, loadRemote } from '@module-federation/runtime';
 
-// The providers this consumer loads at runtime. Edit `entry` to point at a
-// different URL (`remoteEntry.js` is what every supported bundler emits at dev
-// + build time). `name` is the provider build's federation container name and
-// must match the provider's federation `name`; `alias` is the key you pass to
-// loadRemote()/lazyProvider().
+// must match the provider's federation `name`; `alias` is the key passed to
+// loadProviderElement().
+
 const PROVIDERS: Array<{ alias: string; name: string; entry: string }> = [
   {
     alias: 'authMf',

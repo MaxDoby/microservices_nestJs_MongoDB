@@ -1,8 +1,5 @@
-import type {
-  AuthFormState,
-  AuthMode,
-  AuthResponse,
-} from '../types/auth.types';
+import type { AuthFormState, AuthMode } from '../types/auth.types';
+import type { AuthResponse } from '@financial-tracker/contracts';
 
 const API_URL = import.meta.env.VITE_API_URL;
 

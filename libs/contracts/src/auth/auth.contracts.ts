@@ -4,21 +4,26 @@ export const registerRequestSchema = z.object({
   name: z.string().min(1),
   surname: z.string().min(1),
   email: z.email(),
-  password: z.string().min(8),
-});
+  password: z
+    .string()
+    .min(8)
+    .regex(/^(?=.*[A-Za-z])(?=.*\d).+$/, {
+      message: 'Password must contain at least one letter and one number.',
+    }),
+}).strict();
 
 export type RegisterRequest = z.infer<typeof registerRequestSchema>;
 
 export const loginRequestSchema = z.object({
   email: z.email(),
   password: z.string().min(1),
-});
+}).strict();
 
 export type LoginRequest = z.infer<typeof loginRequestSchema>;
 
 export const refreshTokenRequestSchema = z.object({
   refreshToken: z.string().min(1),
-});
+}).strict();
 
 export type RefreshTokenRequest = z.infer<typeof refreshTokenRequestSchema>;
 
@@ -28,7 +33,7 @@ export type LogoutRequest = z.infer<typeof logoutRequestSchema>;
 
 export const validateTokenRequestSchema = z.object({
   authToken: z.string().min(1),
-});
+}).strict();
 
 export type ValidateTokenRequest = z.infer<typeof validateTokenRequestSchema>;
 

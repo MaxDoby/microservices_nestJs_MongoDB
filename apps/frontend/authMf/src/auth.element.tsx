@@ -23,11 +23,11 @@ class FinancialTrackerAuthElement extends HTMLElement {
   }
 
   disconnectedCallback() {
-	this.root?.unmount();
-	this.root = null;
+    this.root?.unmount();
+    this.root = null;
   }
 }
 
 if (!customElements.get('ft-auth')) {
-	customElements.define('ft-auth', FinancialTrackerAuthElement)
+  customElements.define('ft-auth', FinancialTrackerAuthElement);
 }

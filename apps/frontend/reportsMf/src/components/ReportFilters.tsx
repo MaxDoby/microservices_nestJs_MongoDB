@@ -1,8 +1,6 @@
 import { useState } from 'react';
-import type {
-  FinancialReportPeriod,
-  ReportFilters as ReportFiltersValue,
-} from '../types/report.types';
+import type { FinancialReportPeriod } from '@financial-tracker/contracts';
+import type { ReportFilters as ReportFiltersValue } from '../types/report.types';
 
 interface ReportFiltersProps {
   onLoadReport: (filters: ReportFiltersValue) => Promise<void>;

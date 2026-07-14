@@ -33,7 +33,7 @@ import { GetFinancialReportQueryDto } from '../dto/get-financial-report-query.dt
 import { CreateTransactionDto } from '../dto/create-transaction.dto';
 import { DeleteTransactionsDto } from '../dto/delete-transactions.dto';
 import { GetTransactionsQueryDto } from '../dto/get-transactions-query.dto';
-import { PdfHttpResponse } from '@financial-tracker/types';
+import { PdfHttpResponse } from '../types/http-response.types';
 import { map, Observable } from 'rxjs';
 import { ApiGatewayService } from '../api-gateway.service';
 import {

@@ -1,8 +1,9 @@
-import { Logger, ValidationPipe } from '@nestjs/common';
+import { Logger } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { ApiGatewayModule } from './app/api-gateway.module';
 import { ConfigService } from '@nestjs/config';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import { cleanupOpenApiDoc, ZodValidationPipe } from 'nestjs-zod';
 
 const parseCorsOrigin = (corsOrigin: string): string[] => {
   return corsOrigin
@@ -26,13 +27,7 @@ async function bootstrap() {
 
   const globalPrefix = 'api';
   app.setGlobalPrefix(globalPrefix);
-  app.useGlobalPipes(
-    new ValidationPipe({
-      whitelist: true,
-      forbidNonWhitelisted: true,
-      transform: true,
-    }),
-  );
+  app.useGlobalPipes(new ZodValidationPipe());
 
   const swaggerConfig = new DocumentBuilder()
     .setTitle('Financial Tracker API')
@@ -49,7 +44,9 @@ async function bootstrap() {
     })
     .build();
 
-  const swaggerDocument = SwaggerModule.createDocument(app, swaggerConfig);
+  const swaggerDocument = cleanupOpenApiDoc(
+    SwaggerModule.createDocument(app, swaggerConfig),
+  );
 
   SwaggerModule.setup(`${globalPrefix}/docs`, app, swaggerDocument, {
     swaggerOptions: {

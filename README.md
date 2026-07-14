@@ -1,28 +1,77 @@
 # Financial Tracker
 
-Nx monorepo for a financial tracking application built with NestJS microservices,
-RabbitMQ, MongoDB, and React microfrontends.
+Nx monorepo for a financial tracking application built with NestJS
+microservices, RabbitMQ, MongoDB, Docker, Zod contracts and React
+microfrontends.
 
 ## Architecture
 
 Backend:
 
-- `api-gateway`: public HTTP API.
-- `auth-service`: registration, login, and JWT validation.
-- `financial-service`: income and expense transactions.
-- `pdf-service`: generates PDF reports from financial report data.
+- `api-gateway`: public HTTP API, Swagger documentation, guards and HTTP to
+  RabbitMQ orchestration.
+- `auth-service`: registration, login, logout, refresh token handling and JWT
+  validation.
+- `financial-service`: transaction storage, listing, deletion and financial
+  report calculations.
+- `pdf-service`: PDF generation from calculated financial report data.
+- `audit-service`: audit logs for important user actions.
 
 Frontend:
 
 - `shell`: React host application.
-- `authMf`: authentication microfrontend.
-- `financialMf`: financial tracking microfrontend.
-- `reportsMf`: reports microfrontend.
+- `authMf`: authentication microfrontend exposed as a DOM Custom Element.
+- `financialMf`: transaction microfrontend exposed as a DOM Custom Element.
+- `reportsMf`: report microfrontend exposed as a DOM Custom Element.
 
 Shared libraries:
 
-- `libs/contracts`: shared DTOs and message patterns.
-- `libs/types`: simple shared TypeScript types.
+- `libs/contracts`: Zod-first contracts, inferred TypeScript types and RabbitMQ
+  message patterns shared by backend services and frontend applications.
+- `libs/frontend-auth`: shared frontend authentication helper for authenticated
+  requests, token refresh and logout.
+
+## Contracts And DTO Strategy
+
+The project uses Zod contracts as the shared source for data shape between
+frontend and backend services.
+
+`libs/contracts` contains:
+
+- request and response schemas;
+- inferred TypeScript types;
+- RabbitMQ message patterns;
+- shared constants such as transaction categories and report periods.
+
+The `api-gateway` keeps NestJS DTO classes for the HTTP layer, but request and
+query DTOs are generated from Zod schemas with `nestjs-zod`. These DTOs are used
+for:
+
+- Swagger/OpenAPI metadata;
+- `ZodValidationPipe` request validation;
+- controller method typing for public HTTP endpoints.
+
+This means Zod contracts are the source of truth for input validation and shared
+TypeScript inference, while DTO classes are thin NestJS HTTP adapters. Response
+DTOs remain as explicit Swagger documentation models where that is clearer for
+the generated API documentation.
+
+## Microfrontend Contracts
+
+The shell composes frontend providers through DOM Custom Elements loaded by
+Module Federation at runtime.
+
+| Provider | DOM element | Remote expose | Responsibility |
+| --- | --- | --- | --- |
+| `authMf` | `<ft-auth>` | `authMf/element` | Login/register UI and authentication event emission |
+| `financialMf` | `<ft-transactions>` | `financialMf/element` | Transaction creation, listing, pagination and deletion |
+| `reportsMf` | `<ft-reports>` | `reportsMf/element` | Financial report generation and PDF download |
+
+Auth events:
+
+| Event | Emitted by | Consumed by | Purpose |
+| --- | --- | --- | --- |
+| `ft:auth:authenticated` | `<ft-auth>` | `shell` | Notifies shell that login/register succeeded |
 
 ## Requirements
 
@@ -39,39 +88,51 @@ Required variables:
 ```env
 AUTH_MONGO_URI=mongodb://root:root@localhost:27017/financial-tracker-auth?authSource=admin
 FINANCIAL_MONGO_URI=mongodb://root:root@localhost:27017/financial-tracker-financial?authSource=admin
+PDF_MONGO_URI=mongodb://root:root@localhost:27017/financial-tracker-pdf?authSource=admin
+AUDIT_MONGO_URI=mongodb://root:root@localhost:27017/financial-tracker-audit?authSource=admin
 RABBITMQ_URL=amqp://root:root@localhost:5673
-JWT_SECRET=change_me
+
+JWT_SECRET=dev_secret_change_me
 JWT_EXPIRES_IN=86400
 BCRYPT_SALT_ROUNDS=12
+
 CORS_ORIGINS=http://localhost:4200,http://127.0.0.1:4200
 
 VITE_API_URL=http://localhost:3000/api
 VITE_AUTH_MF_URL=http://localhost:5101/remoteEntry.js
 VITE_FINANCIAL_MF_URL=http://localhost:5102/remoteEntry.js
 VITE_REPORTS_MF_URL=http://localhost:5103/remoteEntry.js
-
-
 ```
 
-## Start Backend With Docker
+## Recommended Local Development
+
+Start the backend stack with Docker:
 
 ```sh
-npm run infra:up
+npm run docker:up
 ```
 
-This starts MongoDB, RabbitMQ and all backend services:
+This starts:
 
-- `api-gateway`
-- `auth-service`
-- `financial-service`
-- `pdf-service`
-- `audit-service`
+- MongoDB;
+- RabbitMQ;
+- `api-gateway`;
+- `auth-service`;
+- `financial-service`;
+- `pdf-service`;
+- `audit-service`.
 
-MongoDB runs on `localhost:27017`.
+Start all frontend microfrontends locally:
 
-RabbitMQ runs on `localhost:5673`.
+```sh
+npm run dev
+```
 
-RabbitMQ Management UI runs on `http://localhost:15673`.
+The shell application runs on:
+
+```txt
+http://localhost:4200
+```
 
 The API Gateway runs on:
 
@@ -85,64 +146,66 @@ Swagger API documentation runs on:
 http://localhost:3000/api/docs
 ```
 
-To stop the backend stack:
+RabbitMQ Management UI runs on:
+
+```txt
+http://localhost:15673
+```
+
+Stop the full Docker stack:
+
+```sh
+npm run docker:down
+```
+
+## Backend Local Debug Mode
+
+Use this mode when debugging backend services locally instead of running the
+backend services in Docker.
+
+Start only infrastructure:
+
+```sh
+npm run infra:up
+```
+
+Start backend services locally:
+
+```sh
+npm run dev:backend:local
+```
+
+Start frontend services locally:
+
+```sh
+npm run dev
+```
+
+Stop infrastructure:
 
 ```sh
 npm run infra:down
 ```
 
-## Start Backend Services Manually
+## Individual Service Commands
 
-Use this mode when debugging a specific backend service outside Docker. MongoDB
-and RabbitMQ must still be running.
+Backend:
 
 ```sh
 npm run serve:auth
-```
-
-```sh
 npm run serve:financial
-```
-
-```sh
 npm run serve:pdf
-```
-
-```sh
 npm run serve:audit
-```
-
-```sh
 npm run serve:api
 ```
 
-The Swagger page documents public controllers, request DTO properties, response
-schemas, Bearer authorization, and common error statuses.
-
-## Start Frontend Services
-
-Run each command in a separate terminal:
+Frontend:
 
 ```sh
 npm run serve:auth-mf
-```
-
-```sh
 npm run serve:financial-mf
-```
-
-```sh
 npm run serve:reports-mf
-```
-
-```sh
 npm run serve:shell
-```
-
-The shell application runs on:
-
-```txt
-http://localhost:4200
 ```
 
 ## API Endpoints
@@ -151,6 +214,8 @@ Auth:
 
 - `POST /api/auth/register`
 - `POST /api/auth/login`
+- `POST /api/auth/logout`
+- `POST /api/auth/refresh-token`
 - `POST /api/auth/validate-token`
 
 Transactions:
@@ -161,7 +226,7 @@ Transactions:
 - `GET /api/transactions/report?period=annual&startDate=2026-01-01&endDate=2026-12-31`
 - `GET /api/transactions/report/pdf?period=annual&startDate=2026-01-01&endDate=2026-12-31`
 
-Transaction routes require:
+Protected transaction and report routes require:
 
 ```txt
 Authorization: Bearer <token>
@@ -190,7 +255,6 @@ metadata together with the transaction list.
 ```sh
 npm run build:all
 npm run lint:all
-npx nx run-many -t test --all
 ```
 
 ## Notes

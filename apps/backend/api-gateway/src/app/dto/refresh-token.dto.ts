@@ -1,7 +1,4 @@
-import { IsNotEmpty, IsString } from 'class-validator';
+import { refreshTokenRequestSchema } from '@financial-tracker/contracts';
+import { createZodDto } from 'nestjs-zod';
 
-export class RefreshTokenDto {
-  @IsString()
-  @IsNotEmpty()
-  refreshToken!: string;
-}
+export class RefreshTokenDto extends createZodDto(refreshTokenRequestSchema) {}

@@ -25,10 +25,10 @@ export default defineConfig({
   resolve: {
     alias: {
       '@financial-tracker/frontend-auth': fileURLToPath(
-        new URL(
-          '../../../libs/frontend-auth/src/index.ts',
-          import.meta.url,
-        ),
+        new URL('../../../libs/frontend-auth/src/index.ts', import.meta.url),
+      ),
+      '@financial-tracker/contracts': fileURLToPath(
+        new URL('../../../libs/contracts/src/index.ts', import.meta.url),
       ),
     },
   },

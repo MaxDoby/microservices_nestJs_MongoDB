@@ -35,21 +35,25 @@ export const transactionTypeSchema = z.enum(['income', 'expense']);
 
 export type TransactionType = z.infer<typeof transactionTypeSchema>;
 
+export const mongoIdSchema = z.string().regex(/^[a-f\d]{24}$/i, {
+  message: 'Invalid MongoDB object id.',
+});
+
 export const createIncomeTransactionBodySchema = z.object({
   type: z.literal('income'),
   amount: z.number().positive(),
   category: incomeCategorySchema,
   description: z.string().optional(),
-  date: z.string(),
-});
+  date: z.iso.date(),
+}).strict();
 
 export const createExpenseTransactionBodySchema = z.object({
   type: z.literal('expense'),
   amount: z.number().positive(),
   category: expenseCategorySchema,
   description: z.string().optional(),
-  date: z.string(),
-});
+  date: z.iso.date(),
+}).strict();
 
 export const createTransactionBodySchema = z.discriminatedUnion('type', [
   createIncomeTransactionBodySchema,
@@ -86,6 +90,18 @@ export const transactionCategorySchema = z.enum(TRANSACTION_CATEGORIES);
 
 export type TransactionCategory = z.infer<typeof transactionCategorySchema>;
 
+export const createTransactionHttpBodySchema = z.object({
+  type: transactionTypeSchema,
+  amount: z.number().positive(),
+  category: transactionCategorySchema,
+  description: z.string().optional(),
+  date: z.iso.date(),
+}).strict();
+
+export type CreateTransactionHttpBody = z.infer<
+  typeof createTransactionHttpBodySchema
+>;
+
 export const transactionResponseSchema = z.object({
   id: z.string().min(1),
   userId: z.string().min(1),
@@ -98,10 +114,21 @@ export const transactionResponseSchema = z.object({
 
 export type TransactionResponse = z.infer<typeof transactionResponseSchema>;
 
-export interface GetTransactionsRequest {
-  page: number;
-  limit: number;
-}
+export const getTransactionsRequestSchema = z.object({
+  page: z.number().int().positive(),
+  limit: z.number().int().positive(),
+}).strict();
+
+export type GetTransactionsRequest = z.infer<
+  typeof getTransactionsRequestSchema
+>;
+
+export const getTransactionsQuerySchema = z.object({
+  page: z.coerce.number().int().positive().default(1),
+  limit: z.coerce.number().int().positive().max(100).default(20),
+}).strict();
+
+export type GetTransactionsQuery = z.infer<typeof getTransactionsQuerySchema>;
 
 export const paginatedTransactionsResponseSchema = z.object({
   items: z.array(transactionResponseSchema),
@@ -115,130 +142,196 @@ export type PaginatedTransactionsResponse = z.infer<
   typeof paginatedTransactionsResponseSchema
 >;
 
-export interface DeleteTransactionsRequest {
-  transactionIds: string[];
-}
+export const deleteTransactionsRequestSchema = z.object({
+  transactionIds: z.array(mongoIdSchema).min(1),
+}).strict();
 
-export interface DeleteTransactionsResponse {
-  deletedCount: number;
-}
+export type DeleteTransactionsRequest = z.infer<
+  typeof deleteTransactionsRequestSchema
+>;
 
-export type FinancialReportPeriod = 'monthly' | 'quarterly' | 'annual';
+export const deleteTransactionsResponseSchema = z.object({
+  deletedCount: z.number().int().nonnegative(),
+});
 
-export interface TaxConfig {
-  vatRate: number;
-  corporateIncomeTaxRate: number;
-  pensionFundRate: number;
-  medicalFundRate: number;
-  socialInsuranceRate: number;
-}
+export type DeleteTransactionsResponse = z.infer<
+  typeof deleteTransactionsResponseSchema
+>;
 
-export interface RevenueSection {
-  grossRevenue: number;
-  netRevenue: number;
-  vatCollected: number;
-}
+export const financialReportPeriodSchema = z.enum([
+  'monthly',
+  'quarterly',
+  'annual',
+]);
 
-export interface SocialContributionSection {
-  pensionFund: number;
-  medicalFund: number;
-  socialInsuranceFund: number;
-  otherContributions: number;
-  totalSocialContributions: number;
-}
+export type FinancialReportPeriod = z.infer<typeof financialReportPeriodSchema>;
 
-export interface AdministrativeExpenseSection {
-  rent: number;
-  utilities: number;
-  leasing: number;
-  office: number;
-  services: number;
-  maintenance: number;
-  totalAdministrativeExpenses: number;
-}
+export const taxConfigSchema = z.object({
+  vatRate: z.number().nonnegative(),
+  corporateIncomeTaxRate: z.number().nonnegative(),
+  pensionFundRate: z.number().nonnegative(),
+  medicalFundRate: z.number().nonnegative(),
+  socialInsuranceRate: z.number().nonnegative(),
+});
 
-export interface TaxExpenseSection {
-  vatToPay: number;
-  corporateIncomeTax: number;
-  otherTaxes: number;
-  totalTaxExpense: number;
-}
+export type TaxConfig = z.infer<typeof taxConfigSchema>;
 
-export interface OperationalExpenseSection {
-  materials: number;
-  equipment: number;
-  transport: number;
-  marketing: number;
-  software: number;
-  totalOperationalExpenses: number;
-}
+export const revenueSectionSchema = z.object({
+  grossRevenue: z.number(),
+  netRevenue: z.number(),
+  vatCollected: z.number(),
+});
 
-export interface OtherExpenseSection {
-  uncategorized: number;
-  totalOtherExpenses: number;
-}
+export type RevenueSection = z.infer<typeof revenueSectionSchema>;
 
-export interface PayrollSection {
-  grossSalaries: number;
-  netSalaries: number;
-  pensionFund: number;
-  medicalFund: number;
-  socialInsuranceFund: number;
-  totalPayrollTaxes: number;
-  totalPayrollCost: number;
-}
+export const socialContributionSectionSchema = z.object({
+  pensionFund: z.number(),
+  medicalFund: z.number(),
+  socialInsuranceFund: z.number(),
+  otherContributions: z.number(),
+  totalSocialContributions: z.number(),
+});
 
-export interface ExpenseSection {
-  grossExpenses: number;
-  netExpenses: number;
-  vatDeductible: number;
+export type SocialContributionSection = z.infer<
+  typeof socialContributionSectionSchema
+>;
 
-  payrollExpenses: PayrollSection;
-  socialContributionExpenses: SocialContributionSection;
-  administrativeExpenses: AdministrativeExpenseSection;
-  taxExpenses: TaxExpenseSection;
-  operationalExpenses: OperationalExpenseSection;
-  otherExpenses: OtherExpenseSection;
-}
+export const administrativeExpenseSectionSchema = z.object({
+  rent: z.number(),
+  utilities: z.number(),
+  leasing: z.number(),
+  office: z.number(),
+  services: z.number(),
+  maintenance: z.number(),
+  totalAdministrativeExpenses: z.number(),
+});
 
-export interface VatSection {
-  vatCollectedFromRevenue: number;
-  vatDeductibleFromExpenses: number;
-  vatToPay: number;
-}
+export type AdministrativeExpenseSection = z.infer<
+  typeof administrativeExpenseSectionSchema
+>;
 
-export interface CorporateResultSection {
-  netRevenue: number;
-  netExpenses: number;
-  payrollCost: number;
-  operatingProfit: number;
-}
+export const taxExpenseSectionSchema = z.object({
+  vatToPay: z.number(),
+  corporateIncomeTax: z.number(),
+  otherTaxes: z.number(),
+  totalTaxExpense: z.number(),
+});
 
-export interface FinalResultSection {
-  profitBeforeTax: number;
-  incomeTax: number;
-  profitAfterTax: number;
-}
+export type TaxExpenseSection = z.infer<typeof taxExpenseSectionSchema>;
 
-export interface FinancialReportPeriodRange {
-  type: FinancialReportPeriod;
-  startDate: string;
-  endDate: string;
-}
+export const operationalExpenseSectionSchema = z.object({
+  materials: z.number(),
+  equipment: z.number(),
+  transport: z.number(),
+  marketing: z.number(),
+  software: z.number(),
+  totalOperationalExpenses: z.number(),
+});
 
-export interface GetFinancialReportRequest {
-  userId: string;
-  period: FinancialReportPeriodRange;
-}
+export type OperationalExpenseSection = z.infer<
+  typeof operationalExpenseSectionSchema
+>;
 
-export interface FinancialReportResponse {
-  userId: string;
-  period: FinancialReportPeriodRange;
-  generatedAt: string;
+export const otherExpenseSectionSchema = z.object({
+  uncategorized: z.number(),
+  totalOtherExpenses: z.number(),
+});
 
-  revenue: RevenueSection;
-  expenses: ExpenseSection;
-  vat: VatSection;
-  corporateResult: CorporateResultSection;
-  finalResult: FinalResultSection;
-}
+export type OtherExpenseSection = z.infer<typeof otherExpenseSectionSchema>;
+
+export const payrollSectionSchema = z.object({
+  grossSalaries: z.number(),
+  netSalaries: z.number(),
+  pensionFund: z.number(),
+  medicalFund: z.number(),
+  socialInsuranceFund: z.number(),
+  totalPayrollTaxes: z.number(),
+  totalPayrollCost: z.number(),
+});
+
+export type PayrollSection = z.infer<typeof payrollSectionSchema>;
+
+export const expenseSectionSchema = z.object({
+  grossExpenses: z.number(),
+  netExpenses: z.number(),
+  vatDeductible: z.number(),
+  payrollExpenses: payrollSectionSchema,
+  socialContributionExpenses: socialContributionSectionSchema,
+  administrativeExpenses: administrativeExpenseSectionSchema,
+  taxExpenses: taxExpenseSectionSchema,
+  operationalExpenses: operationalExpenseSectionSchema,
+  otherExpenses: otherExpenseSectionSchema,
+});
+
+export type ExpenseSection = z.infer<typeof expenseSectionSchema>;
+
+export const vatSectionSchema = z.object({
+  vatCollectedFromRevenue: z.number(),
+  vatDeductibleFromExpenses: z.number(),
+  vatToPay: z.number(),
+});
+
+export type VatSection = z.infer<typeof vatSectionSchema>;
+
+export const corporateResultSectionSchema = z.object({
+  netRevenue: z.number(),
+  netExpenses: z.number(),
+  payrollCost: z.number(),
+  operatingProfit: z.number(),
+});
+
+export type CorporateResultSection = z.infer<
+  typeof corporateResultSectionSchema
+>;
+
+export const finalResultSectionSchema = z.object({
+  profitBeforeTax: z.number(),
+  incomeTax: z.number(),
+  profitAfterTax: z.number(),
+});
+
+export type FinalResultSection = z.infer<typeof finalResultSectionSchema>;
+
+export const financialReportPeriodRangeSchema = z.object({
+  type: financialReportPeriodSchema,
+  startDate: z.iso.date(),
+  endDate: z.iso.date(),
+}).strict();
+
+export type FinancialReportPeriodRange = z.infer<
+  typeof financialReportPeriodRangeSchema
+>;
+
+export const getFinancialReportRequestSchema = z.object({
+  userId: z.string().min(1),
+  period: financialReportPeriodRangeSchema,
+}).strict();
+
+export type GetFinancialReportRequest = z.infer<
+  typeof getFinancialReportRequestSchema
+>;
+
+export const getFinancialReportQuerySchema = z.object({
+  period: financialReportPeriodSchema,
+  startDate: z.iso.date(),
+  endDate: z.iso.date(),
+}).strict();
+
+export type GetFinancialReportQuery = z.infer<
+  typeof getFinancialReportQuerySchema
+>;
+
+export const financialReportResponseSchema = z.object({
+  userId: z.string(),
+  period: financialReportPeriodRangeSchema,
+  generatedAt: z.string(),
+  revenue: revenueSectionSchema,
+  expenses: expenseSectionSchema,
+  vat: vatSectionSchema,
+  corporateResult: corporateResultSectionSchema,
+  finalResult: finalResultSectionSchema,
+});
+
+export type FinancialReportResponse = z.infer<
+  typeof financialReportResponseSchema
+>;
