@@ -18,6 +18,7 @@
     "serve:reports-mf": "nx serve reportsMf",
     "dev:backend:local": "concurrently \"npm run serve:auth\" \"npm run serve:financial\" \"npm run serve:pdf\" \"npm run serve:audit\" \"npm run serve:api\"",
     "dev:frontend": "concurrently \"npm run serve:auth-mf\" \"npm run serve:financial-mf\" \"npm run serve:reports-mf\" \"npm run serve:shell\"",
+    "dev:docker": "npm run docker:up && npm run dev:frontend",
     "dev": "npm run dev:frontend",
     "build:all": "nx run-many -t build --all",
     "lint:all": "nx run-many -t lint --all"

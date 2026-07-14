@@ -83,6 +83,9 @@ Auth events:
 
 Create a local `.env` file from `.env.example`.
 
+For Docker backend development, `.env.docker.example` contains only the values
+that are consumed by Docker Compose and the local Vite frontends.
+
 Required variables:
 
 ```env
@@ -106,13 +109,14 @@ VITE_REPORTS_MF_URL=http://localhost:5103/remoteEntry.js
 
 ## Recommended Local Development
 
-Start the backend stack with Docker:
+For the simplest development flow, run the backend stack in Docker and the
+frontend microfrontends locally with Vite:
 
 ```sh
-npm run docker:up
+npm run dev:docker
 ```
 
-This starts:
+This starts the Docker backend stack first:
 
 - MongoDB;
 - RabbitMQ;
@@ -122,11 +126,7 @@ This starts:
 - `pdf-service`;
 - `audit-service`.
 
-Start all frontend microfrontends locally:
-
-```sh
-npm run dev
-```
+Then it starts all frontend microfrontends locally.
 
 The shell application runs on:
 
@@ -156,6 +156,12 @@ Stop the full Docker stack:
 
 ```sh
 npm run docker:down
+```
+
+If the backend stack is already running and you only need the frontend:
+
+```sh
+npm run dev
 ```
 
 ## Backend Local Debug Mode
