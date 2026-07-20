@@ -21,11 +21,15 @@
     "dev:docker": "npm run docker:up && npm run dev:frontend",
     "dev": "npm run dev:frontend",
     "build:all": "nx run-many -t build --all",
-    "lint:all": "nx run-many -t lint --all"
+    "lint:all": "nx run-many -t lint --all",
+    "openapi:generate": "node tools/openapi/generate-api-gateway-openapi.cjs",
+    "api-contracts:generate": "npm run openapi:generate && openapi-ts",
+    "api-contracts:check": "npm run api-contracts:generate && git diff --exit-code libs/generated-api/src/lib"
   },
   "private": true,
   "devDependencies": {
     "@eslint/js": "^9.8.0",
+    "@hey-api/openapi-ts": "^0.99.0",
     "@module-federation/vite": "^1.15.5",
     "@nestjs/schematics": "^11.0.0",
     "@nestjs/testing": "^11.0.0",
@@ -58,6 +62,7 @@
     "prettier": "~3.6.2",
     "ts-jest": "^29.4.0",
     "ts-node": "10.9.1",
+    "tsconfig-paths": "^4.2.0",
     "tslib": "^2.3.0",
     "typescript": "~5.9.2",
     "typescript-eslint": "^8.40.0",

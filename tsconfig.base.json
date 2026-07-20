@@ -16,9 +16,8 @@
     "skipDefaultLibCheck": true,
     "paths": {
       "@financial-tracker/contracts": ["./libs/contracts/src/index.ts"],
-      "@financial-tracker/frontend-auth": [
-        "./libs/frontend-auth/src/index.ts"
-      ]
+      "@financial-tracker/frontend-auth": ["./libs/frontend-auth/src/index.ts"],
+      "@financial-tracker/generated-api": ["./libs/generated-api/src/index.ts"]
     }
   },
   "exclude": ["node_modules", "tmp"]

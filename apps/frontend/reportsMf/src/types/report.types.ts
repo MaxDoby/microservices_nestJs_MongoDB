@@ -1,12 +1,7 @@
 import type {
-  FinancialReportPeriod,
-  FinancialReportResponse,
-} from '@financial-tracker/contracts';
+  FinancialControllerGetFinancialReportData,
+  FinancialReportResponseDto,
+} from '@financial-tracker/generated-api';
 
-export interface ReportFilters {
-  period: FinancialReportPeriod;
-  startDate: string;
-  endDate: string;
-}
-
-export type FinancialReport = FinancialReportResponse;
+export type FinancialReport = FinancialReportResponseDto;
+export type ReportFilters = FinancialControllerGetFinancialReportData['query'];
