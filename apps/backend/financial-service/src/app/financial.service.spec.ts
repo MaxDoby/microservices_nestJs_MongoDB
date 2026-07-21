@@ -80,6 +80,22 @@ describe('FinancialService', () => {
     expect(transactionRepository.create).not.toHaveBeenCalled();
   });
 
+  it('throws RpcException for invalid expense category', async () => {
+    const payload = {
+      userId: '6a426f90fcc2f5e584cb060a',
+      type: 'expense',
+      amount: 1500,
+      category: 'sales',
+      date: '2026-07-20',
+    };
+
+    await expect(
+      service.createTransaction(payload as CreateTransactionRequest),
+    ).rejects.toBeInstanceOf(RpcException);
+
+    expect(transactionRepository.create).not.toHaveBeenCalled();
+  });
+
   it('returns paginated transactions', async () => {
     const payload: GetTransactionsRequest = {
       page: 1,

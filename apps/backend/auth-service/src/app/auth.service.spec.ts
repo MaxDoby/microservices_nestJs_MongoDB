@@ -175,6 +175,30 @@ describe('AuthService', () => {
     expect(compareMock).not.toHaveBeenCalled();
   });
 
+  it('throws RpcException when login password is invalid', async () => {
+    const payload: LoginRequest = {
+      email: 'max@max.com',
+      password: 'wrong-password',
+    };
+
+    userRepository.findByEmail.mockResolvedValue(
+      buildUser({
+        id: '6a426f90fcc2f5e584cb060a',
+        email: 'max@max.com',
+        password: 'hashed-password',
+      }),
+    );
+    compareMock.mockResolvedValue(false);
+
+    await expect(service.login(payload)).rejects.toBeInstanceOf(RpcException);
+
+    expect(compareMock).toHaveBeenCalledWith(
+      'wrong-password',
+      'hashed-password',
+    );
+    expect(userRepository.updateRefreshTokenHash).not.toHaveBeenCalled();
+  });
+
   it('validates access token', async () => {
     const payload: ValidateTokenRequest = {
       authToken: 'access-token',
@@ -197,6 +221,30 @@ describe('AuthService', () => {
         type: 'access',
       },
     });
+  });
+
+  it('throws RpcException when access token has invalid type', async () => {
+    jwtService.verifyAsync.mockResolvedValue({
+      sub: '6a426f90fcc2f5e584cb060a',
+      email: 'max@max.com',
+      type: 'refresh',
+    });
+
+    await expect(
+      service.validateToken({
+        authToken: 'refresh-token',
+      }),
+    ).rejects.toBeInstanceOf(RpcException);
+  });
+
+  it('throws RpcException when access token verification fails', async () => {
+    jwtService.verifyAsync.mockRejectedValue(new Error('jwt expired'));
+
+    await expect(
+      service.validateToken({
+        authToken: 'expired-token',
+      }),
+    ).rejects.toBeInstanceOf(RpcException);
   });
 
   it('refreshes auth response when refresh token is valid', async () => {
@@ -237,5 +285,113 @@ describe('AuthService', () => {
     );
     expect(result.accessToken).toBe('new-access-token');
     expect(result.refreshToken).toBe('new-refresh-token');
+  });
+
+  it('throws RpcException when refresh token has invalid type', async () => {
+    jwtService.verifyAsync.mockResolvedValue({
+      sub: '6a426f90fcc2f5e584cb060a',
+      email: 'max@max.com',
+      type: 'access',
+    });
+
+    await expect(
+      service.refreshToken({
+        refreshToken: 'access-token',
+      }),
+    ).rejects.toBeInstanceOf(RpcException);
+
+    expect(userRepository.findById).not.toHaveBeenCalled();
+  });
+
+  it('throws RpcException when refresh token user is missing', async () => {
+    jwtService.verifyAsync.mockResolvedValue({
+      sub: '6a426f90fcc2f5e584cb060a',
+      email: 'max@max.com',
+      type: 'refresh',
+    });
+    userRepository.findById.mockResolvedValue(null);
+
+    await expect(
+      service.refreshToken({
+        refreshToken: 'refresh-token',
+      }),
+    ).rejects.toBeInstanceOf(RpcException);
+
+    expect(compareMock).not.toHaveBeenCalled();
+  });
+
+  it('throws RpcException when stored refresh token hash is missing', async () => {
+    jwtService.verifyAsync.mockResolvedValue({
+      sub: '6a426f90fcc2f5e584cb060a',
+      email: 'max@max.com',
+      type: 'refresh',
+    });
+    userRepository.findById.mockResolvedValue(
+      buildUser({
+        id: '6a426f90fcc2f5e584cb060a',
+        email: 'max@max.com',
+      }),
+    );
+
+    await expect(
+      service.refreshToken({
+        refreshToken: 'refresh-token',
+      }),
+    ).rejects.toBeInstanceOf(RpcException);
+
+    expect(compareMock).not.toHaveBeenCalled();
+  });
+
+  it('throws RpcException when refresh token hash comparison fails', async () => {
+    jwtService.verifyAsync.mockResolvedValue({
+      sub: '6a426f90fcc2f5e584cb060a',
+      email: 'max@max.com',
+      type: 'refresh',
+    });
+    userRepository.findById.mockResolvedValue(
+      buildUser({
+        id: '6a426f90fcc2f5e584cb060a',
+        email: 'max@max.com',
+        refreshTokenHash: 'saved-refresh-token-hash',
+      }),
+    );
+    compareMock.mockResolvedValue(false);
+
+    await expect(
+      service.refreshToken({
+        refreshToken: 'refresh-token',
+      }),
+    ).rejects.toBeInstanceOf(RpcException);
+
+    expect(compareMock).toHaveBeenCalledWith(
+      'refresh-token',
+      'saved-refresh-token-hash',
+    );
+  });
+
+  it('logs out when refresh token is valid', async () => {
+    jwtService.verifyAsync.mockResolvedValue({
+      sub: '6a426f90fcc2f5e584cb060a',
+      email: 'max@max.com',
+      type: 'refresh',
+    });
+    userRepository.findById.mockResolvedValue(
+      buildUser({
+        id: '6a426f90fcc2f5e584cb060a',
+        email: 'max@max.com',
+        refreshTokenHash: 'saved-refresh-token-hash',
+      }),
+    );
+    compareMock.mockResolvedValue(true);
+    userRepository.clearRefreshTokenHash.mockResolvedValue({});
+
+    const result = await service.logout({
+      refreshToken: 'refresh-token',
+    });
+
+    expect(userRepository.clearRefreshTokenHash).toHaveBeenCalledWith(
+      '6a426f90fcc2f5e584cb060a',
+    );
+    expect(result).toEqual({ success: true });
   });
 });

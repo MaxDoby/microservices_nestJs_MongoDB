@@ -32,3 +32,6 @@ jobs:
 
       - name: Lint all projects
         run: npm run lint:all
+
+      - name: Test backend projects
+        run: npm run test:backend

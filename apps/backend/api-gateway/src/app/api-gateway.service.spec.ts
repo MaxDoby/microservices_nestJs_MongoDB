@@ -14,6 +14,8 @@ const buildClient = () => ({
   send: jest.fn(),
 });
 
+type AuthAction = 'CREATE_TRANSACTION' | 'DELETE_TRANSACTIONS' | 'GENERATE_REPORT';
+
 const buildAuthResponse = () => ({
   accessToken: 'access-token',
   refreshToken: 'refresh-token',
@@ -36,7 +38,7 @@ const buildTransactionResponse = () => ({
 });
 
 const buildAuditLogResponse = (
-  action: 'CREATE_TRANSACTION' | 'DELETE_TRANSACTIONS' | 'GENERATE_REPORT',
+  action: AuthAction,
 ) => ({
   id: '6a426f90fcc2f5e584cb060c',
   actorUserId: '6a426f90fcc2f5e584cb060a',
@@ -198,6 +200,137 @@ describe('ApiGatewayService', () => {
     ).rejects.toBeInstanceOf(HttpException);
   });
 
+  it('converts rpc errors without status and message to internal server error', async () => {
+    authClient.send.mockReturnValue(throwError(() => ({})));
+
+    await expect(
+      lastValueFrom(
+        service.login({
+          email: 'max@max.com',
+          password: 'password1',
+        }),
+      ),
+    ).rejects.toMatchObject({
+      message: 'Internal server error',
+      status: 500,
+    });
+  });
+
+  it('sends login payload to auth microservice', async () => {
+    const payload = {
+      email: 'max@max.com',
+      password: 'password1',
+    };
+
+    authClient.send.mockReturnValue(of(buildAuthResponse()));
+
+    const result = await lastValueFrom(service.login(payload));
+
+    expect(authClient.send).toHaveBeenCalledWith(AUTH_PATTERNS.LOGIN, payload);
+    expect(result.refreshToken).toBe('refresh-token');
+  });
+
+  it('sends refresh token payload to auth microservice', async () => {
+    const payload = {
+      refreshToken: 'refresh-token',
+    };
+
+    authClient.send.mockReturnValue(of(buildAuthResponse()));
+
+    const result = await lastValueFrom(service.refreshToken(payload));
+
+    expect(authClient.send).toHaveBeenCalledWith(
+      AUTH_PATTERNS.REFRESH_TOKEN,
+      payload,
+    );
+    expect(result.accessToken).toBe('access-token');
+  });
+
+  it('converts refresh token rpc errors to http exceptions', async () => {
+    authClient.send.mockReturnValue(
+      throwError(() => ({
+        statusCode: 401,
+        message: 'Invalid or expired refresh token.',
+      })),
+    );
+
+    await expect(
+      lastValueFrom(
+        service.refreshToken({
+          refreshToken: 'expired-refresh-token',
+        }),
+      ),
+    ).rejects.toBeInstanceOf(HttpException);
+  });
+
+  it('sends logout payload to auth microservice', async () => {
+    const payload = {
+      refreshToken: 'refresh-token',
+    };
+
+    authClient.send.mockReturnValue(of({ success: true }));
+
+    const result = await lastValueFrom(service.logout(payload));
+
+    expect(authClient.send).toHaveBeenCalledWith(AUTH_PATTERNS.LOGOUT, payload);
+    expect(result).toEqual({ success: true });
+  });
+
+  it('converts logout rpc errors to http exceptions', async () => {
+    authClient.send.mockReturnValue(
+      throwError(() => ({
+        statusCode: 401,
+        message: 'Invalid or expired refresh token.',
+      })),
+    );
+
+    await expect(
+      lastValueFrom(
+        service.logout({
+          refreshToken: 'expired-refresh-token',
+        }),
+      ),
+    ).rejects.toBeInstanceOf(HttpException);
+  });
+
+  it('sends validate token payload to auth microservice', async () => {
+    const payload = {
+      authToken: 'access-token',
+    };
+
+    authClient.send.mockReturnValue(
+      of({
+        isValid: true,
+        user,
+      }),
+    );
+
+    const result = await lastValueFrom(service.validateToken(payload));
+
+    expect(authClient.send).toHaveBeenCalledWith(
+      AUTH_PATTERNS.VALIDATE_TOKEN,
+      payload,
+    );
+    expect(result.user).toEqual(user);
+  });
+
+  it('converts validate token rpc errors to http exceptions', async () => {
+    authClient.send.mockReturnValue(
+      throwError(() => ({
+        statusCode: 401,
+        message: 'Invalid or expired token.',
+      })),
+    );
+
+    await expect(
+      lastValueFrom(
+        service.validateToken({
+          authToken: 'expired-token',
+        }),
+      ),
+    ).rejects.toBeInstanceOf(HttpException);
+  });
+
   it('creates transaction for current user and writes audit log', async () => {
     financialClient.send.mockReturnValue(of(buildTransactionResponse()));
     auditClient.send.mockReturnValue(of(buildAuditLogResponse('CREATE_TRANSACTION')));
@@ -239,6 +372,27 @@ describe('ApiGatewayService', () => {
     expect(result.id).toBe('6a426f90fcc2f5e584cb060b');
   });
 
+  it('converts create transaction rpc errors to http exceptions', async () => {
+    financialClient.send.mockReturnValue(
+      throwError(() => ({
+        statusCode: 400,
+        message: 'Invalid income category.',
+      })),
+    );
+
+    await expect(
+      lastValueFrom(
+        service.createTransaction({
+          userId: user.sub,
+          type: 'income',
+          amount: 1500,
+          category: 'sales',
+          date: '2026-07-20',
+        }),
+      ),
+    ).rejects.toBeInstanceOf(HttpException);
+  });
+
   it('rejects financial report when startDate is after endDate', () => {
     expect(() =>
       service.getFinancialReportForCurrentUser(user, {
@@ -249,6 +403,131 @@ describe('ApiGatewayService', () => {
     ).toThrow(BadRequestException);
 
     expect(financialClient.send).not.toHaveBeenCalled();
+  });
+
+  it('gets transactions using pagination query', async () => {
+    const paginatedResponse = {
+      items: [buildTransactionResponse()],
+      page: 2,
+      limit: 10,
+      totalItems: 11,
+      totalPages: 2,
+    };
+
+    financialClient.send.mockReturnValue(of(paginatedResponse));
+
+    const result = await lastValueFrom(
+      service.getTransactionsForCurrentUser(user, {
+        page: 2,
+        limit: 10,
+      }),
+    );
+
+    expect(financialClient.send).toHaveBeenCalledWith(
+      FINANCIAL_PATTERNS.GET_TRANSACTIONS,
+      {
+        page: 2,
+        limit: 10,
+      },
+    );
+    expect(result).toEqual(paginatedResponse);
+  });
+
+  it('converts get transactions rpc errors to http exceptions', async () => {
+    financialClient.send.mockReturnValue(
+      throwError(() => ({
+        statusCode: 500,
+        message: 'Could not load transactions.',
+      })),
+    );
+
+    await expect(
+      lastValueFrom(
+        service.getTransactions({
+          page: 1,
+          limit: 20,
+        }),
+      ),
+    ).rejects.toBeInstanceOf(HttpException);
+  });
+
+  it('sends direct get financial report payload to financial microservice', async () => {
+    const payload = {
+      userId: user.sub,
+      period: {
+        type: 'annual' as const,
+        startDate: '2026-01-01',
+        endDate: '2026-12-31',
+      },
+    };
+
+    financialClient.send.mockReturnValue(of(buildFinancialReport()));
+
+    const result = await lastValueFrom(service.getFinancialReport(payload));
+
+    expect(financialClient.send).toHaveBeenCalledWith(
+      FINANCIAL_PATTERNS.GET_REPORT,
+      payload,
+    );
+    expect(result.userId).toBe(user.sub);
+  });
+
+  it('converts get financial report rpc errors to http exceptions', async () => {
+    financialClient.send.mockReturnValue(
+      throwError(() => ({
+        statusCode: 500,
+        message: 'Could not generate report.',
+      })),
+    );
+
+    await expect(
+      lastValueFrom(
+        service.getFinancialReport({
+          userId: user.sub,
+          period: {
+            type: 'annual',
+            startDate: '2026-01-01',
+            endDate: '2026-12-31',
+          },
+        }),
+      ),
+    ).rejects.toBeInstanceOf(HttpException);
+  });
+
+  it('sends direct PDF payload to PDF microservice', async () => {
+    const report = buildFinancialReport();
+    const payload = {
+      userId: user.sub,
+      report,
+    };
+
+    pdfClient.send.mockReturnValue(of(buildPdfResponse()));
+
+    const result = await lastValueFrom(service.generateFinancialReportPdf(payload));
+
+    expect(pdfClient.send).toHaveBeenCalledWith(
+      PDF_PATTERNS.GENERATE_FINANCIAL_REPORT,
+      payload,
+    );
+    expect(result.fileName).toBe('financial-report-6a426f90fcc2f5e584cb060a.pdf');
+  });
+
+  it('converts PDF rpc errors to http exceptions', async () => {
+    pdfClient.send.mockReturnValue(
+      throwError(() => ({
+        statusCode: 500,
+        message: 'Could not generate PDF.',
+      })),
+    );
+
+    await expect(
+      lastValueFrom(
+        service.generateFinancialReportPdf({
+          userId: user.sub,
+          report: buildFinancialReport(),
+        }),
+      ),
+    ).rejects.toBeInstanceOf(HttpException);
   });
 
   it('deletes transactions for current user and writes audit log', async () => {
@@ -293,6 +572,23 @@ describe('ApiGatewayService', () => {
       },
     });
     expect(result).toEqual({ deletedCount: 2 });
+  });
+
+  it('converts delete transactions rpc errors to http exceptions', async () => {
+    financialClient.send.mockReturnValue(
+      throwError(() => ({
+        statusCode: 500,
+        message: 'Could not delete transactions.',
+      })),
+    );
+
+    await expect(
+      lastValueFrom(
+        service.deleteTransactions({
+          transactionIds: ['6a426f90fcc2f5e584cb060b'],
+        }),
+      ),
+    ).rejects.toBeInstanceOf(HttpException);
   });
 
   it('gets financial report for current user and writes audit log', async () => {
@@ -359,5 +655,26 @@ describe('ApiGatewayService', () => {
       },
     );
     expect(result.mimeType).toBe('application/pdf');
+  });
+
+  it('converts audit rpc errors to http exceptions', async () => {
+    auditClient.send.mockReturnValue(
+      throwError(() => ({
+        statusCode: 500,
+        message: 'Could not create audit log.',
+      })),
+    );
+
+    await expect(
+      lastValueFrom(
+        service.createAuditLog({
+          actorUserId: user.sub,
+          actorEmail: user.email,
+          action: 'GENERATE_REPORT',
+          resourceType: 'financial-report',
+          status: 'success',
+        }),
+      ),
+    ).rejects.toBeInstanceOf(HttpException);
   });
 });

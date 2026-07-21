@@ -22,6 +22,7 @@
     "dev": "npm run dev:frontend",
     "build:all": "nx run-many -t build --all",
     "lint:all": "nx run-many -t lint --all",
+    "test:backend": "nx run-many -t test --projects=auth-service,financial-service,api-gateway,pdf-service,audit-service,api-gateway-e2e --runInBand",
     "openapi:generate": "node tools/openapi/generate-api-gateway-openapi.cjs",
     "api-contracts:generate": "npm run openapi:generate && openapi-ts",
     "api-contracts:check": "npm run api-contracts:generate && git diff --exit-code libs/generated-api/src/lib"

@@ -4,4 +4,12 @@ module.exports = {
   coverageDirectory: '../../../coverage/apps/backend/financial-service',
   testEnvironment: 'node',
   setupFiles: ['<rootDir>/src/test-setup.ts'],
+  collectCoverageFrom: [
+    'src/**/*.ts',
+    '!src/**/*.spec.ts',
+    '!src/main.ts',
+    '!src/test-setup.ts',
+    '!src/**/*.module.ts',
+    '!src/**/schemas/**',
+  ],
 };
