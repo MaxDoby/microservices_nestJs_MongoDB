@@ -14,9 +14,10 @@ WORKDIR /app
 
 ENV NODE_ENV=production
 
-COPY --from=builder /app/dist/apps/backend/audit-service ./
-
+COPY package*.json ./
 RUN npm ci --omit=dev
+
+COPY --from=builder /app/dist/apps/backend/audit-service ./
 
 EXPOSE 3000
 

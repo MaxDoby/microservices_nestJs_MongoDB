@@ -7,4 +7,11 @@ module.exports = {
   },
   moduleFileExtensions: ['ts', 'js', 'html'],
   coverageDirectory: '../../../coverage/apps/backend/auth-service',
+  collectCoverageFrom: [
+    'src/**/*.ts',
+    '!src/**/*.spec.ts',
+    '!src/main.ts',
+    '!src/**/*.module.ts',
+    '!src/**/schemas/**',
+  ],
 };

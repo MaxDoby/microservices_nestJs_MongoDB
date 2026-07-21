@@ -1,11 +1,30 @@
 import type { FinancialReport, ReportFilters } from '../types/report.types';
 import { authenticatedFetch } from '@financial-tracker/frontend-auth';
+import {
+  zFinancialControllerGetFinancialReportPdfQuery,
+  zFinancialControllerGetFinancialReportQuery,
+  zFinancialControllerGetFinancialReportResponse,
+} from '@financial-tracker/generated-api';
 
 const buildReportQuery = (filters: ReportFilters) => {
+  const query = zFinancialControllerGetFinancialReportQuery.parse(filters);
+
   const params = new URLSearchParams({
-    period: filters.period,
-    startDate: filters.startDate,
-    endDate: filters.endDate,
+    period: query.period,
+    startDate: query.startDate,
+    endDate: query.endDate,
+  });
+
+  return params.toString();
+};
+
+const buildReportPdfQuery = (filters: ReportFilters) => {
+  const query = zFinancialControllerGetFinancialReportPdfQuery.parse(filters);
+
+  const params = new URLSearchParams({
+    period: query.period,
+    startDate: query.startDate,
+    endDate: query.endDate,
   });
 
   return params.toString();
@@ -17,20 +36,19 @@ export const fetchFinancialReport = async (
   const query = buildReportQuery(filters);
 
   const response = await authenticatedFetch(`/transactions/report?${query}`);
-
   const data = await response.json();
 
   if (!response.ok) {
     throw new Error(data.message ?? 'Could not load financial report.');
   }
 
-  return data;
+  return zFinancialControllerGetFinancialReportResponse.parse(data);
 };
 
 export const downloadFinancialReportPdf = async (
   filters: ReportFilters,
 ): Promise<void> => {
-  const query = buildReportQuery(filters);
+  const query = buildReportPdfQuery(filters);
 
   const response = await authenticatedFetch(
     `/transactions/report/pdf?${query}`,

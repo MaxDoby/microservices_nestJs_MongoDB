@@ -1,0 +1,19 @@
+{
+  "name": "generated-api",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/generated-api/src",
+  "projectType": "library",
+  "tags": [],
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/libs/generated-api",
+        "main": "libs/generated-api/src/index.ts",
+        "tsConfig": "libs/generated-api/tsconfig.lib.json",
+        "assets": ["libs/generated-api/*.md"]
+      }
+    }
+  }
+}

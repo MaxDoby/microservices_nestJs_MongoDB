@@ -259,11 +259,40 @@ metadata together with the transaction list.
 ## Verify Project
 
 ```sh
+npm run api-contracts:check
 npm run build:all
 npm run lint:all
+npm run test:backend
 ```
 
-## Notes
+Backend coverage:
 
-E2E projects were intentionally removed for now. They will be added back after
-the core backend and frontend flows are complete.
+```sh
+npx nx run-many -t test --projects=auth-service,financial-service,api-gateway,pdf-service,audit-service,api-gateway-e2e --coverage --coverageReporters=text-summary --runInBand
+```
+
+HTML coverage reports are generated under:
+
+```txt
+coverage/apps/backend/<project-name>/index.html
+```
+
+## Testing
+
+Backend unit tests cover:
+
+- `auth-service`;
+- `financial-service`;
+- `api-gateway`;
+- `pdf-service`;
+- `audit-service`.
+
+API E2E tests are implemented in:
+
+```txt
+apps/backend/api-gateway-e2e
+```
+
+The E2E suite starts a real Nest HTTP application with API Gateway controllers,
+guards and Zod validation pipe, while mocking internal RabbitMQ microservice
+communication.

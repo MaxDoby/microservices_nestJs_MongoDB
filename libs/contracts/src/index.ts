@@ -6,3 +6,4 @@ export * from './pdf/pdf.contracts';
 export * from './pdf/pdf.patterns';
 export * from './audit/audit.contracts';
 export * from './audit/audit.patterns';
+export * from './common/error.contracts';

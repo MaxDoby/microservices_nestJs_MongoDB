@@ -1,6 +1,7 @@
 import { useState } from 'react';
-import type { FinancialReportPeriod } from '@financial-tracker/contracts';
 import type { ReportFilters as ReportFiltersValue } from '../types/report.types';
+
+type ReportPeriod = ReportFiltersValue['period'];
 
 interface ReportFiltersProps {
   onLoadReport: (filters: ReportFiltersValue) => Promise<void>;
@@ -11,7 +12,7 @@ export const ReportFilters = ({
   onLoadReport,
   onDownloadPdf,
 }: ReportFiltersProps) => {
-  const [period, setPeriod] = useState<FinancialReportPeriod>('annual');
+  const [period, setPeriod] = useState<ReportPeriod>('annual');
   const [startDate, setStartDate] = useState('2026-01-01');
   const [endDate, setEndDate] = useState('2026-12-31');
 
@@ -34,7 +35,7 @@ export const ReportFilters = ({
       <select
         value={period}
         onChange={(event) =>
-          setPeriod(event.target.value as FinancialReportPeriod)
+          setPeriod(event.target.value as ReportPeriod)
         }
       >
         <option value="monthly">Monthly</option>

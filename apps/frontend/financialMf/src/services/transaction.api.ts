@@ -5,35 +5,50 @@ import type {
   PaginatedTransactions,
 } from '../types/transaction.types';
 import { authenticatedFetch } from '@financial-tracker/frontend-auth';
+import {
+  zFinancialControllerCreateTransactionBody,
+  zFinancialControllerCreateTransactionResponse,
+  zFinancialControllerDeleteTransactionsBody,
+  zFinancialControllerDeleteTransactionsResponse,
+  zFinancialControllerGetTransactionsQuery,
+  zFinancialControllerGetTransactionsResponse,
+} from '@financial-tracker/generated-api';
 
 export const fetchTransactions = async (
   page: number,
   limit: number,
 ): Promise<PaginatedTransactions> => {
-  const searchParams = new URLSearchParams({
-    page: String(page),
-    limit: String(limit),
+  const query = zFinancialControllerGetTransactionsQuery.parse({
+    page,
+    limit,
   });
-  const response = await authenticatedFetch(`/transactions?${searchParams}`);
 
+  const searchParams = new URLSearchParams({
+    page: String(query.page),
+    limit: String(query.limit),
+  });
+
+  const response = await authenticatedFetch(`/transactions?${searchParams}`);
   const data = await response.json();
 
   if (!response.ok) {
     throw new Error(data.message ?? 'Could not load transactions.');
   }
 
-  return data;
+  return zFinancialControllerGetTransactionsResponse.parse(data);
 };
 
 export const createTransactionRequest = async (
   payload: CreateTransactionPayload,
 ): Promise<Transaction> => {
+  const body = zFinancialControllerCreateTransactionBody.parse(payload);
+
   const response = await authenticatedFetch('/transactions', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify(payload),
+    body: JSON.stringify(body),
   });
 
   const data = await response.json();
@@ -42,18 +57,20 @@ export const createTransactionRequest = async (
     throw new Error(data.message ?? 'Could not create transaction.');
   }
 
-  return data;
+  return zFinancialControllerCreateTransactionResponse.parse(data);
 };
 
 export const deleteTransactionsRequest = async (
   payload: DeleteTransactionsPayload,
 ): Promise<{ deletedCount: number }> => {
+  const body = zFinancialControllerDeleteTransactionsBody.parse(payload);
+
   const response = await authenticatedFetch('/transactions', {
     method: 'DELETE',
     headers: {
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify(payload),
+    body: JSON.stringify(body),
   });
 
   const data = await response.json();
@@ -62,5 +79,5 @@ export const deleteTransactionsRequest = async (
     throw new Error(data.message ?? 'Could not delete transactions.');
   }
 
-  return data;
+  return zFinancialControllerDeleteTransactionsResponse.parse(data);
 };

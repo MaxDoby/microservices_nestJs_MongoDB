@@ -2,10 +2,10 @@ import { useState } from 'react';
 import {
   expenseCategories,
   incomeCategories,
-  type CreateTransactionPayload,
   type TransactionType,
   type TransactionCategory,
-} from '../types/transaction.types';
+} from '../types/transaction-options';
+import type { CreateTransactionPayload } from '../types/transaction.types';
 
 interface TransactionFormProps {
   onCreateTransaction: (payload: CreateTransactionPayload) => Promise<void>;

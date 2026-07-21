@@ -1,19 +1,11 @@
-type StoredAuthUser = {
-  id: string;
-  name: string;
-  surname: string;
-  email: string;
-};
+import type {
+  AuthResponseDto,
+  ErrorResponseDto,
+} from '@financial-tracker/generated-api';
+import { zAuthControllerRefreshTokenResponse } from '@financial-tracker/generated-api';
 
-type RefreshTokenResponse = {
-  accessToken: string;
-  refreshToken: string;
-  user: StoredAuthUser;
-};
-
-type ErrorResponse = {
-  message?: string;
-};
+type RefreshTokenResponse = AuthResponseDto;
+type ErrorResponse = ErrorResponseDto;
 
 const getApiUrl = () => {
   const apiUrl = import.meta.env['VITE_API_URL'];
@@ -78,7 +70,7 @@ const refreshAccessToken = async (): Promise<string> => {
     );
   }
 
-  const authData = data as RefreshTokenResponse;
+  const authData = zAuthControllerRefreshTokenResponse.parse(data);
 
   localStorage.setItem('accessToken', authData.accessToken);
   localStorage.setItem('refreshToken', authData.refreshToken);

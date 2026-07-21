@@ -7,4 +7,13 @@ module.exports = {
   },
   moduleFileExtensions: ['ts', 'js', 'html'],
   coverageDirectory: '../../../coverage/apps/backend/api-gateway',
+  collectCoverageFrom: [
+    'src/**/*.ts',
+    '!src/**/*.spec.ts',
+    '!src/main.ts',
+    '!src/**/*.module.ts',
+    '!src/**/dto/**',
+    '!src/**/docs/**',
+    '!src/**/decorators/**',
+  ],
 };
